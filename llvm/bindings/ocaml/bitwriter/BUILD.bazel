@@ -1,0 +1,48 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_signature(
+    name = "Bitwriter_cmi",
+    src = "llvm_bitwriter.mli",
+    deps   = ["//llvm/bindings/ocaml/llvm:Llvm"]
+)
+
+ocaml_module(
+    name = "Bitwriter",
+    struct = "llvm_bitwriter.ml",
+    sig    = ":Bitwriter_cmi",
+    deps   = ["//llvm/bindings/ocaml/llvm:Llvm",
+              ":bitwriter_c",
+              # eliminate warning about "directory
+              # layout change" in v5.
+              # (this is not a genuine dep)
+              "@unix//lib/unix"
+              ],
+)
+
+cc_library(
+    name = "bitwriter_c",
+    srcs = [
+        "bitwriter_ocaml.c",
+    ],
+    copts = [
+        "-g",
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@ocaml)/lib/c",
+        "-I$(@)/llvm/bindings/ocaml/llvm"
+    ],
+    deps = [
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@llvm_sdk//sdk/c/lib:libLLVMCodeGen",
+        "@llvm_sdk//sdk/c/lib:libLLVMTarget",
+        "@llvm_sdk//sdk/c/lib:all-libs",
+        "@llvm_sdk//sdk/c/lib:bitwriter-libs",
+        "@ocaml//lib/c:sdk",
+        "//llvm/bindings/ocaml/llvm:Llvm"
+    ],
+    toolchains = ["//:repo_paths"]
+)

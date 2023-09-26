@@ -1,0 +1,44 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_signature(
+    name = "Scalar_opts_cmi",
+    src  = "llvm_scalar_opts.mli",
+    deps = [
+        "//llvm/bindings/ocaml/transforms/passmgr_builder:Passmgr_builder_cmi",
+        "//llvm/bindings/ocaml/llvm:Llvm_cmi",
+    ]
+)
+
+ocaml_module(
+    name = "Scalar_opts",
+    struct = "llvm_scalar_opts.ml",
+    sig    = ":Scalar_opts_cmi",
+    # opts   = ["-w", "-labels-omitted"], # 6
+    deps   = [
+        "//llvm/bindings/ocaml/llvm:Llvm",
+        "//llvm/bindings/ocaml/target:Target",
+        ":scalar_opts_c"
+    ],
+)
+
+cc_library(
+    name = "scalar_opts_c",
+    srcs = ["scalar_opts_ocaml.c"],
+    copts = [
+        "-I$(@ocaml)/lib/c",
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@)/llvm/bindings/ocaml/llvm"
+    ],
+    deps = [
+        "@ocaml//lib/c:sdk",
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "//llvm/bindings/ocaml/llvm:llvm_c"
+    ],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths"]
+)

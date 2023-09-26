@@ -1,0 +1,37 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_signature(
+    name = "Debuginfo_cmi",
+    src = "llvm_debuginfo.mli",
+    deps   = ["//llvm/bindings/ocaml/llvm:Llvm"]
+)
+
+ocaml_module(
+    name = "Debuginfo",
+    struct = "llvm_debuginfo.ml",
+    sig    = ":Debuginfo_cmi",
+    opts   = ["-w", "-labels-omitted"], # 6
+    deps   = [":debuginfo_c"],
+)
+
+cc_library(
+    name = "debuginfo_c",
+    srcs = ["debuginfo_ocaml.c"],
+    copts = [
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@ocaml)/lib/c",
+        "-I$(@)/llvm/bindings/ocaml/llvm"
+    ],
+    deps = [
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@llvm_sdk//sdk/c/lib:all-libs",
+        "@ocaml//lib/c:sdk",
+        "//llvm/bindings/ocaml/llvm:Llvm"
+    ],
+    toolchains = ["//:repo_paths"]
+)

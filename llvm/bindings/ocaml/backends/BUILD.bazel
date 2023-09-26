@@ -1,0 +1,54 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module", "ocaml_signature")
+load(":RULES.bzl", "llvm_gensrc")
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_module(
+    name   = "Backend",
+    struct = ":llvm_backend.ml",
+    sig    = ":Backend_cmi",
+    deps   = [
+        # "//src/llvm:Llvm",
+        ":backend_c",
+    ],
+)
+
+llvm_gensrc(
+    name = "bkend",
+    template = "llvm_backend.ml.in",
+    out      = "llvm_backend.ml",
+    toolchains = ["@llvm_sdk//makevars"]
+)
+
+ocaml_signature(
+    name   = "Backend_cmi",
+    src    = ":llvm_backend.mli",
+)
+
+llvm_gensrc(
+    name = "bkend_cmi",
+    template = "llvm_backend.mli.in",
+    out      = "llvm_backend.mli",
+    toolchains = ["@llvm_sdk//makevars"]
+)
+
+###########
+cc_library(
+    name = "backend_c",
+    srcs = ["backend_ocaml.c"],
+    copts = [
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@ocaml)/lib/c",
+    ],
+    deps = [
+        # FIXME: do we need target-specific libs here?
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@ocaml//lib/c:sdk"
+    ],
+    defines = ["TARGET=$(LLVM_TARGET_ARCH)"],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths",
+                  "@llvm_sdk//makevars"
+                  ]
+)

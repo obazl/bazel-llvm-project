@@ -1,0 +1,44 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_signature(
+    name = "Linker_cmi",
+    src = "llvm_linker.mli",
+    deps   = ["//llvm/bindings/ocaml/llvm:Llvm"]
+)
+
+ocaml_module(
+    name = "Linker",
+    struct = "llvm_linker.ml",
+    sig    = ":Linker_cmi",
+    deps   = [
+        "//llvm/bindings/ocaml/llvm:Llvm",
+        "//llvm/bindings/ocaml/target:Target",
+        ":linker_c"
+    ],
+)
+
+cc_library(
+    name = "linker_c",
+    srcs = [
+        "linker_ocaml.c",
+    ],
+    copts = [
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@ocaml)/lib/c",
+        "-I$(@)/llvm/bindings/ocaml/llvm"
+    ],
+    deps = [
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@llvm_sdk//sdk/c/lib:linker-libs",
+        "@llvm_sdk//sdk/c/lib:target-libs",
+        "@ocaml//lib/c:sdk",
+        "//llvm/bindings/ocaml/llvm:llvm_c"
+    ],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths"]
+)
