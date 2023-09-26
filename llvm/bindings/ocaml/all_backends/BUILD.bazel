@@ -1,0 +1,34 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_signature(
+    name = "All_backends_cmi",
+    src = "llvm_all_backends.mli",
+)
+
+ocaml_module(
+    name = "All_backends",
+    struct = "llvm_all_backends.ml",
+    sig    = ":All_backends_cmi",
+    deps   = [":all_backends_c"]
+)
+
+cc_library(
+    name = "all_backends_c",
+    srcs = ["all_backends_ocaml.c"],
+    copts = [
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@ocaml)/lib/c",
+    ],
+    deps = [
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@llvm_sdk//sdk/c/lib:all-targets-libs",
+        "@ocaml//lib/c:sdk"
+    ],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths"]
+)
