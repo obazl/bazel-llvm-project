@@ -1,0 +1,474 @@
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+load(
+    "@rules_ocaml//build:rules.bzl",
+    "ocaml_archive",
+    "ocaml_binary",
+    "ocaml_module",
+    "ocaml_test",
+)
+# load("@llvm//utils/bazel:RULES.bzl",
+load("@llvm_tools//:RULES.bzl",
+     "bitcode_gen",
+     "filecheck_test",
+     "llvm_dis")
+
+TEST_OPTS = [
+    # "-verbose",
+    # "-ccopt", "-Wl,-v", ## pass verbose to assembler
+
+    "-g",
+    "-cclib", "-lm",
+    "-cclib", "-lz",
+    "-cclib", "-lstdc++",
+    "-cclib", "-lcurses",
+    "-ccopt", "/opt/homebrew/lib/libzstd.1.5.5.dylib",
+
+    # "-ccopt", "-Wl,-macos_version_min",
+    # "-ccopt", "-Wl,13.0",
+    # "-ccopt", "-Wl,-platform_version",
+    # "-ccopt", "-Wl,macOS",
+    # "-ccopt", "-Wl,13.0",
+    # "-ccopt", "-Wl,13.0",
+
+    "-ccopt", "-Wl,-no_warn_duplicate_libraries",
+    "-ccopt", "-Wl,-w", # suppress all linker warnings
+    # "-ccopt", "-Wl,-no_deduplicate",
+    # "-ccopt", "-no-canonical-prefixes",
+
+    # "-ccopt", "-target", "-ccopt", "arm64-apple-macosx13.5",
+
+    # or, from bazel cc link:
+    # "-ccopt", "-arch", "-ccopt", "arm64",
+
+    # clang: error: unknown argument: '-platform_version'
+    # "-ccopt", "-platform_version",
+    # "-ccopt", "macos", "-ccopt", "13.5.0", "-ccopt", "14.0",
+
+    # but this works:
+    "-ccopt", "-Wl,-platform_version",
+    "-ccopt", "-Wl,macos", "-ccopt", "-Wl,13.5.0",
+    "-ccopt", "-Wl,14.0",
+
+    # -syslibroot
+    # /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.0.sdk
+
+]
+
+test_suite(
+    name = "test",
+    tests = [
+        # ":builds", "clibs",
+        ":analysis_test",
+        ":bitreader_test",
+        ":bitwriter_test",
+        # ":core_test",
+        ":debuginfo_test",
+        ":diagnostic_handler_test",
+        ":executionengine_test",
+        ":ext_exc_test",
+        # ":ipo_test",
+        ":irreader_test",
+        ":linker_test",
+        # ":passbuilder_test",
+        # ":passmgr_builder_test",
+        # ":scalar_opts_test",
+        ":target_test",
+        ":transform_utils_test",
+        # ":vectorize_test"
+    ]
+)
+
+###########
+ocaml_test(
+    name = "analysis_test",
+    main = ":Analysis",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short",
+)
+
+ocaml_module(
+    name = "Analysis",
+    struct = "analysis.ml",
+    deps   = ["//src/analysis:Analysis"],
+    opts = ["-w", "+A-27-70"],
+)
+
+###########
+ocaml_test(
+    name = "bitreader_test",
+    args = ["bitcode.bc"],
+    main = ":Bitreader",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Bitreader",
+    struct = "bitreader.ml",
+    deps   = ["//src/bitreader:Bitreader",
+              "//src/bitwriter:Bitwriter"])
+
+###########
+ocaml_test(
+    name = "bitwriter_test",
+    args = ["bitcode.bc"],
+    main = ":Bitwriter",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Bitwriter",
+    struct = "bitwriter.ml",
+    deps   = ["//src/bitreader:Bitreader",
+              "//src/bitwriter:Bitwriter"])
+
+###########
+# ocaml_test(
+ocaml_binary(
+    name = "core",
+    # args = ["core.bc"],
+    main = ":Core",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    # timeout = "short"
+)
+
+ocaml_module(
+    name = "Core",
+    struct = "core.ml",
+    deps   = ["//src/analysis:Analysis",
+              "//src/bitwriter:Bitwriter",
+              "//test/Utils:Testsuite"])
+
+###########
+ocaml_test(
+    name = "debuginfo_test",
+    # args = ["bitcode.bc"],
+    main = ":Debuginfo",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Debuginfo",
+    struct = "debuginfo.ml",
+    deps   = ["//src/all_backends:All_backends",
+              "//src/target:Target",
+              "//src/analysis:Analysis",
+              "//src/debuginfo:Debuginfo",
+              "//test/Utils:Testsuite"]
+)
+
+###########
+ocaml_test(
+    name = "diagnostic_handler_test",
+    args = ["bitcode.bc"],
+    main = ":Diagnostic_Handler",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Diagnostic_Handler",
+    struct = "diagnostic_handler.ml",
+    deps   = [
+        # "//src/all_backends:All_backends",
+        # "//src/target:Target",
+        "//src/bitreader:Bitreader",
+        # "//src/diagnostic_handler:Debuginfo",
+        "//test/Utils:Testsuite"
+    ]
+)
+
+###########
+ocaml_test(
+    name = "executionengine_test",
+    # args = ["bitcode.bc"],
+    main = ":Executionengine",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Executionengine",
+    struct = "executionengine.ml",
+    opts   = ["-w", "-no-cmx-file"], #Ctypes, Foreign
+    deps   = [
+        "//src/llvm:Llvm",
+        "//src/executionengine:Executionengine",
+        # "//src/all_backends:All_backends",
+              "//src/target:Target",
+              "//src/analysis:Analysis",
+              "//src/debuginfo:Debuginfo",
+              "//test/Utils:Testsuite"
+    ]
+)
+
+###########
+ocaml_test(
+    name = "ext_exc_test",
+    main = ":Ext_exc",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Ext_exc",
+    struct = "ext_exc.ml",
+    deps   = [
+        "//src/llvm:Llvm",
+        "//src/bitreader:Bitreader",
+        "//src/executionengine:Executionengine",
+    ]
+)
+
+###########
+# ocaml_test(
+#     name = "ipo_test",
+#     main = ":Ipo",
+#     opts = TEST_OPTS,
+#     toolchains = ["//:repo_paths"],
+#     timeout = "short"
+# )
+
+# ocaml_module(
+#     name = "Ipo",
+#     struct = "ipo.ml",
+#     deps   = [
+#         "//src/llvm:Llvm",
+#         "//src/transforms/ipo:Ipo",
+#         "//src/transforms/passmgr_builder:Passmgr_builder",
+#         # "//src/bitreader:Bitreader",
+#         # "//src/executionengine:Executionengine",
+#     ]
+# )
+
+###########
+ocaml_test(
+    name = "irreader_test",
+    main = ":Irreader",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Irreader",
+    struct = "irreader.ml",
+    deps   = ["//src/llvm:Llvm",
+              "//src/irreader:Irreader"])
+
+###########
+ocaml_test(
+    name = "linker_test",
+    main = ":Linker",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Linker",
+    struct = "linker.ml",
+    deps   = ["//src/llvm:Llvm",
+              "//src/linker:Linker"])
+
+###########
+ocaml_test(
+    name = "passbuilder_test",
+    args = ["bitcode.bc"],
+    main = ":passbuilder",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "passbuilder",
+    struct = "passbuilder.ml",
+    deps   = [
+        "//src/transforms/passbuilder:passbuilder"
+    ]
+)
+
+###########
+# ocaml_test(
+#     name = "passmgr_builder_test",
+#     args = ["bitcode.bc"],
+#     main = ":Passmgr_builder",
+#     opts = TEST_OPTS,
+#     toolchains = ["//:repo_paths"],
+#     timeout = "short"
+# )
+
+# ocaml_module(
+#     name = "Passmgr_builder",
+#     struct = "passmgr_builder.ml",
+#     deps   = [
+#         "//src/transforms/passmgr_builder:Passmgr_builder"
+#     ]
+# )
+
+###########
+# ocaml_test(
+#     name = "scalar_opts_test",
+#     args = ["bitcode.bc"],
+#     main = ":Scalar_opts",
+#     opts = TEST_OPTS,
+#     toolchains = ["//:repo_paths"],
+#     timeout = "short"
+# )
+
+# ocaml_module(
+#     name = "Scalar_opts",
+#     struct = "scalar_opts.ml",
+#     deps   = [
+#         "//src/transforms/passmgr_builder:Passmgr_builder",
+#         "//src/transforms/scalar_opts:Scalar_opts"
+#     ]
+# )
+
+###########
+ocaml_test(
+    name = "target_test",
+    args = ["bitcode.bc"],
+    main = ":Target",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Target",
+    struct = "target.ml",
+    opts   = [
+        "-w", "-labels-omitted"
+    ],
+    deps   = [
+        # "//src/transforms/passmgr_builder:Passmgr_builder",
+        "//src/all_backends:All_backends",
+        "//src/target:Target"
+    ]
+)
+
+###########
+ocaml_test(
+    name = "transform_utils_test",
+    args = ["bitcode.bc"],
+    main = ":Transform_utils",
+    opts = TEST_OPTS,
+    toolchains = ["//:repo_paths"],
+    timeout = "short"
+)
+
+ocaml_module(
+    name = "Transform_utils",
+    struct = "transform_utils.ml",
+    deps   = [
+        # "//src/transforms/passmgr_builder:Passmgr_builder",
+        # "//src/all_backends:Llvm_all_backends",
+        "//src/transforms/utils:Transform_utils"
+    ]
+)
+
+###########
+# ocaml_test(
+#     name = "vectorize_test",
+#     args = ["bitcode.bc"],
+#     main = ":Vectorize",
+#     opts = TEST_OPTS,
+#     toolchains = ["//:repo_paths"],
+#     timeout = "short"
+# )
+
+# ocaml_module(
+#     name = "Vectorize",
+#     struct = "vectorize.ml",
+#     deps   = [
+#         "//src/transforms/passmgr_builder:Passmgr_builder",
+#         # "//src/all_backends:Llvm_all_backends",
+#         "//src/transforms/vectorize:Vectorize"
+#     ]
+# )
+
+################################
+build_test(
+    name = "builds",
+    targets = [
+        "//src/all_backends:All_backends",
+        "//src/analysis:Analysis",
+        # "//src/backends:Backend", # not yet
+        "//src/bitreader:Bitreader",
+        "//src/bitwriter:Bitwriter",
+        "//src/debuginfo:Debuginfo",
+        "//src/executionengine:Executionengine",
+        "//src/irreader:Irreader",
+        "//src/linker:Linker",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
+        # "//src/transforms/ipo:Ipo",
+        # "//src/transforms/passmgr_builder:Passmgr_builder",
+        # "//src/transforms/scalar_opts:Scalar_opts",
+        "//src/transforms/utils:Transform_utils",
+        # "//src/transforms/vectorize:Vectorize",
+        ]
+)
+
+## NB: clib deps of ocaml_module are not built
+## until they are needed for linking, so we build
+## them separately here.
+
+build_test(
+    name = "clibs",
+    targets = [
+        "//src/all_backends:all_backends_c",
+        "//src/analysis:analysis_c",
+        "//src/backends:backend_c",
+        "//src/bitreader:bitreader_c",
+        "//src/bitwriter:bitwriter_c",
+        "//src/debuginfo:debuginfo_c",
+        "//src/executionengine:executionengine_c",
+        "//src/irreader:irreader_c",
+        "//src/linker:linker_c",
+        "//src/llvm:llvm_c",
+        "//src/target:target_c",
+        # "//src/transforms/ipo:ipo_c",
+        # "//src/transforms/passmgr_builder:passmgr_builder_c",
+        # "//src/transforms/scalar_opts:scalar_opts_c",
+        "//src/transforms/utils:transform_utils_c",
+        # "//src/transforms/vectorize:vectorize_c",
+        ]
+)
+
+################
+# * RUN: %t/executable %t/bitcode.bc
+# * RUN: llvm-dis < %t/bitcode.bc > %t/dis.ll
+# * RUN: FileCheck %s < %t/dis.ll
+
+bitcode_gen(
+    name = "core_bc",
+    tool = ":core",
+    out  = "core.bc"
+)
+
+llvm_dis(
+    name     = "core_dis",
+    bitcode  = ":core.bc",
+    ll       = "core_dis.ll"
+)
+
+filecheck_test(
+    name = "core_fc",
+    match_file = "core.ml",
+    data = ":core_dis.ll",
+    timeout = "short"
+)

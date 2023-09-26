@@ -1,0 +1,36 @@
+= OBazl LLVM
+A bazelized fork of link:https://github.com/llvm/llvm-project[The LLVM Project].
+
+Scenarios:
+
+* Compiler & tools only. Developer uses clang etc. to build C/C++ sources, and does not use the LLVM SDK.
+
+* SDK and compilers. A language developer uses the LLVM SDK to develop
+  a language, and uses LLVM clang to build the sources.
+
+* SDK only. A language developer uses the LLVM SDK, but uses a
+  different compiler to build code. This could happen for example if
+  development is in some language other then C or C++, using
+  language-specific bindings for the LLVM SDK, such as OCaml or Go. It
+  could also happen if development is in C/C++, if the developer
+  chooses to use some other compiler.
+
+Orthogonally, there are several ways to obtain LLVM:
+
+* Use a precompiled distribution;
+* Build the entire LLVM toolchain from sources;
+
+The Bazel build system implemented in this repo is designed to address
+all the above scenarios.
+
+== How it works
+
+One primary Bazel module and several extension modules.
+
+* `@llvm` - the primary repo; contains toolchain definitions
+* `@llvm_tools` - contains tools used in development, e.g. `FileCheck`, `llvm-dis`, etc.
+* `@llvm_sdk` - the C and C++ sdks
+* `@ocaml_llvm` - OCaml bindings, using the C API
+
+
+Extension modules function as overlays.
