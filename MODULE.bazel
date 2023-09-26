@@ -5,11 +5,24 @@ module(
     bazel_compatibility = [">=6.0.0"]
 )
 
+LLVM_VERSION = "15.0.0"
+LLVM_BUILD_DIR = ".build." + LLVM_VERSION
+
 llvm_sdks = use_extension("@llvm//:EXTENSIONS.bzl",
                           "llvm_sdks")
-llvm_sdks.c(targets = ["ALL"])
-llvm_sdks.ocaml(targets = ["ALL"])
-use_repo(llvm_sdks, "llvm_sdk", "ocaml_llvm")
+llvm_sdks.c(
+    version = LLVM_VERSION,
+    build_dir = LLVM_BUILD_DIR,
+    targets = ["ALL"]
+)
+llvm_sdks.ocaml(
+    version = LLVM_VERSION,
+    build_dir = LLVM_BUILD_DIR,
+    targets = ["ALL"]
+)
+use_repo(llvm_sdks,
+         "llvm_sdk", "llvm_tools",
+         "ocaml_llvm")
 
 bazel_dep(name = "platforms",    version = "0.0.7")
 bazel_dep(name = "bazel_skylib", version = "1.4.2")
