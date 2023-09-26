@@ -1,4 +1,4 @@
-LLVM_VERSION = "15.0.0"
+LLVM_VERSION = "15.0.7"
 LLVM_BUILD_DIR = ".build." + LLVM_VERSION
 
 module(
