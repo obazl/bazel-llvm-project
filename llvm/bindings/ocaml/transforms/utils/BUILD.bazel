@@ -9,7 +9,7 @@ ocaml_signature(
     name = "Transform_utils_cmi",
     src  = "llvm_transform_utils.mli",
     deps = [
-        "//llvm/bindings/ocaml/llvm:Llvm_cmi"
+        "//src/llvm:Llvm_cmi"
     ]
 )
 
@@ -18,8 +18,8 @@ ocaml_module(
     struct = "llvm_transform_utils.ml",
     sig    = ":Transform_utils_cmi",
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
-        "//llvm/bindings/ocaml/target:Target",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
         ":transform_utils_c"
     ],
 )
@@ -30,13 +30,13 @@ cc_library(
     copts = [
         "-I$(@ocaml)/lib/c",
         "-I$(@llvm_sdk)/sdk/c/include",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@ocaml//lib/c:sdk",
         "@llvm_sdk//sdk/c/include:llvm-c",
         "@llvm_sdk//sdk/c/lib:transformutils-libs",
-        "//llvm/bindings/ocaml/llvm:llvm_c"
+        "//src/llvm:llvm_c"
     ],
     visibility = ["//visibility:public"],
     toolchains = ["//:repo_paths"]

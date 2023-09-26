@@ -1,11 +1,15 @@
 load(":libs.bzl", "genlibsmap")
 
-# llvm_targets extension
-# for each TARGET, uses rctx.template to generate
-
 # info on targets: llvm-project/docs/GettingStarted.rst
 
 ################################################################
+supported = [
+    "AArch64", "AMDGPU", "ARM", "AVR", "BPF",
+    "Hexagon", "Lanai", "Mips", "MSP430", "NVPTX",
+    "PowerPC", "RISCV", "Sparc", "SystemZ",
+    "WebAssembly", "X86", "XCore",
+]
+
 archmap = {
     "aarch64": "AArch64",
     "amdgpu": "AMDGPU",
@@ -26,7 +30,8 @@ archmap = {
     "xcore": "XCore"
 }
 
-#### repo rule ####
+################################################################
+#### C SDK repo rule ####
 def _llvm_sdk_impl(rctx):
     print("LLVM_SDK REPO RULE")
 
@@ -44,6 +49,36 @@ module(
     rctx.file(
         "BUILD.bazel",
         content = "#"
+    )
+
+    rctx.file(
+        "CONFIG.bzl",
+        content = """
+LLVM_DEFINES = [
+    "__STDC_CONSTANT_MACROS",
+    "__STDC_FORMAT_MACROS",
+    "__STDC_LIMIT_MACROS"
+]
+
+LLVM_LINKOPTS = [
+    # llvm linker flags (llvm-config --ldflags):
+    "-Wl,-search_paths_first",
+    "-Wl,-headerpad_max_install_names"
+]
+"""
+    )
+
+    rctx.file(
+        "version/BUILD.bazel",
+        content = """
+load("@bazel_skylib//rules:common_settings.bzl",
+      "string_setting")
+
+string_setting(
+    name = "version", build_setting_default = "15.0.0",
+    visibility = ["//visibility:public"],
+    )
+"""
     )
 
     # rctx.workspace_root is the ws from which
@@ -97,26 +132,6 @@ cc_library(
         Label(":BUILD.lib_pkg"),
         substitutions = libsmap,
         executable = False,
-    )
-
-    # rctx.symlink("libexec", "sdk/c/libexec")
-
-    # rctx.file(
-    #     "lib/BUILD.bazel",
-    #     content = "#"
-    # )
-
-    rctx.file(
-        "version/BUILD.bazel",
-        content = """
-load("@bazel_skylib//rules:common_settings.bzl",
-      "string_setting")
-
-string_setting(
-    name = "version", build_setting_default = "15.0.0",
-    visibility = ["//visibility:public"],
-    )
-"""
     )
 
     xarch = rctx.os.arch.lower()
@@ -193,92 +208,7 @@ config_setting(name = "x86",
 """
     )
 
-    supported = [
-        "AArch64", "AMDGPU", "ARM", "AVR", "BPF",
-        "Hexagon", "Lanai", "Mips", "MSP430", "NVPTX",
-        "PowerPC", "RISCV", "Sparc", "SystemZ",
-        "WebAssembly", "X86", "XCore",
-    ]
-
-#     content = """
-# load(\"@rules_ocaml//build:rules.bzl\", \"ocaml_module\")
-
-# """
-#     selectors = ""
-#     for target in supported:
-#         selector = """
-#         "//target:{}": "llvm_{}.ml",
-#         "//host:{}": "llvm_{}.ml",
-#         """.format(target, target, target, target)
-#         selectors = selectors + selector
-
-#     m = "\n".join([
-#          "ocaml_module(",
-#          "    name   = \"Backend\",",
-#          "    struct = select({",
-#          selectors,
-#          "    }),",
-#          "    deps   = [",
-#          "        # \"//src/llvm:Llvm\"",
-#          "        \"//src/backends:backend_c\"",
-#          "    ]",
-#          ")\n"
-#     ])
-
-#     # content = content + m
-
-#     for target in supported:
-#         module = "\n".join([
-#             "ocaml_module(",
-#             "    name   = \"{T}\",",
-#             "    struct = \"llvm_{T}.ml\",",
-#             "    deps   = [",
-#             "        # \"//src/llvm:Llvm\"",
-#             "        \"//src/backends:backend_c\"",
-#             "    ]",
-#             ")\n"
-#         ]).format(T=target)
-#         content = content + module
-
-#     rctx.file(
-#         "backends/BUILD.bazel",
-#         content = content
-#     )
-
-        # rctx.template(
-        #     "backends/llvm_{}.ml".format(target), # output
-        #     Label("//src/backends:BUILD.template"),
-        #     substitutions = {"@TARGET@": target},
-        #     executable = False,
-        # )
-
-    # if "ALL" in rctx.attr.targets:
-    #     print("EMITTING ALL TARGETS")
-    #     for target in supported:
-    #         rctx.template(
-    #             "backends/llvm_{}.ml".format(target), # output
-    #             Label("//src/backends:llvm_backend.ml.in"),
-    #             substitutions = {"@TARGET@": target},
-    #             executable = False,
-    #         )
-
-    # elif "host" in  rctx.attr.targets:
-    #     print("EMITTING HOST TARGET")
-    # else:
-    #     print("EMITTING TARGETS")
-    #     for target in rctx.attr.targets:
-    #         if target not in supported:
-    #             if target not in ["ALL", "host"]:
-    #                 supported.extend(["ALL", "host"])
-    #                 print("Supported targets: %s" % supported)
-    #                 fail("Bad target: %s" % target)
-    #         rctx.template(
-    #             "backends/llvm_{}.ml".format(target), # output
-    #             Label("//src/backends:llvm_backend.ml.in"),
-    #             substitutions = {"@TARGET@": target},
-    #             executable = False,
-    #         )
-## end _llvm_sdk_impl
+    ## end of _llvm_sdk repo rule
 
 ############
 _llvm_sdk = repository_rule(
@@ -303,10 +233,96 @@ _llvm_sdk = repository_rule(
     },
 )
 
-##############
-## TAG CLASSES
-_config = tag_class(
+################################################################
+#### OCAML SDK repo rule ####
+def _ocaml_sdk_impl(rctx):
+    print("OCAML_SDK REPO RULE")
+
+    rctx.file(
+        "MODULE.bazel",
+        content = """
+module(
+    name = "ocaml_llvm",
+    version = "15.0.0",
+    compatibility_level = 15,
+)
+"""
+    )
+
+    rctx.file(
+        "BUILD.bazel",
+        content = """
+load("@cc_config//:MACROS.bzl", "repo_paths")
+
+load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
+
+PROD_REPOS = [
+    "@llvm_sdk//version",
+    "@ocaml//version"
+]
+
+repo_paths(
+    name = "repo_paths",
+    repos = PROD_REPOS
+)
+
+repo_paths(
+    name = "test_repo_paths",
+    repos = PROD_REPOS + [
+    ]
+)
+"""
+
+    )
+
+    rctx.file(
+        "version/BUILD.bazel",
+        content = """
+load("@bazel_skylib//rules:common_settings.bzl",
+      "string_setting")
+
+string_setting(
+    name = "version", build_setting_default = "15.0.0",
+    visibility = ["//visibility:public"],
+    )
+"""
+    )
+
+    # rctx.workspace_root is the ws from which
+    # the extension (& the repo rule) was called.
+    # we symlink directories, which means
+    # the build files we write will be written
+    # to the original dirs. the will not be
+    # removed by bazel clean.
+    wsroot = rctx.workspace_root
+    bld = ".build.15.0.0"
+
+    ## ocaml_sdk contains:
+    ##  llvm-project/llvm/bindings/ocaml
+    ##  llvm-project/llvm/test/Bindings/OCaml
+
+    rctx.symlink("{root}/llvm/bindings/ocaml".format(
+        root=wsroot), "src")
+
+    rctx.symlink("{root}/llvm/test/Bindings/OCaml".format(
+        root=wsroot), "test")
+
+    ## end of _ocaml_sdk repo rule
+
+############
+_ocaml_sdk = repository_rule(
+    implementation = _ocaml_sdk_impl,
+    local = True,
     attrs = {
+        "llvm": attr.label(),
+        "c_sdk": attr.label(),
+
+        # "_ml_template": attr.label(
+        #     default = "//src/backends/llvm_backend.ml.in"
+        # ),
+        # "_mli_template": attr.label(
+        #     default = "//src/backends/llvm_backend.mli.in"
+        # ),
         "targets": attr.string_list(
             doc = """Supported targets:
             AArch64, AMDGPU, ARM, AVR, BPF, Hexagon, Lanai, Mips,
@@ -315,28 +331,65 @@ _config = tag_class(
             Special targets: ALL, host
             """
         ),
-    }
+    },
 )
 
+##############
+_sdk_attrs = {
+    "targets": attr.string_list(
+        doc = """Supported targets:
+            AArch64, AMDGPU, ARM, AVR, BPF, Hexagon, Lanai, Mips,
+            MSP430, NVPTX, PowerPC, RISCV, Sparc, SystemZ,
+            WebAssembly, X86, XCore.
+            Special targets: ALL, host
+            """
+    )
+}
+
+#### TAG CLASSES ####
+_c_sdk_tag = tag_class(attrs = _sdk_attrs)
+_ocaml_sdk_tag = tag_class(attrs = _sdk_attrs)
+
+
 #### EXTENSION IMPL ####
-def _llvm_sdk_extension_impl(module_ctx):
+def _llvm_sdks_impl(module_ctx):
 
-  print("LLVM_SDK EXTENSION")
+    print("LLVM_SDKS EXTENSION")
 
-  # collect artifacts from across the dependency graph
-  targets = []
-  for mod in module_ctx.modules:
-      for config in mod.tags.config:
-          for target in config.targets:
-              print("TARGET: %s" % target)
-              targets.append(target)
+    c_sdk = False
+    ocaml_sdk = False
 
-  _llvm_sdk(name = "llvm_sdk",
-            llvm = "@llvm",
-            targets = targets)
+    # collect artifacts from across the dependency graph
+    targets = []
+    for mod in module_ctx.modules:
+        for config in mod.tags.c:
+            c_sdk = True
+            print("C SDK config")
+            for target in config.targets:
+                print("TARGET: %s" % target)
+                targets.append(target)
+
+        for config in mod.tags.ocaml:
+            print("OCAML SDK config")
+            ocaml_sdk = True
+            for target in config.targets:
+                print("TARGET: %s" % target)
+                targets.append(target)
+
+    if c_sdk:
+        _llvm_sdk(name = "llvm_sdk",
+                  llvm = "@llvm",
+                  targets = targets)
+
+    if ocaml_sdk:
+        _ocaml_sdk(name = "ocaml_llvm",
+                   llvm = "@llvm",
+                   c_sdk = "@llvm_sdk",
+                   targets = targets)
 
 ##############################
-llvm_sdk = module_extension(
-  implementation = _llvm_sdk_extension_impl,
-  tag_classes = {"config": _config},
+llvm_sdks = module_extension(
+  implementation = _llvm_sdks_impl,
+  tag_classes = {"c": _c_sdk_tag,
+                 "ocaml": _ocaml_sdk_tag},
 )

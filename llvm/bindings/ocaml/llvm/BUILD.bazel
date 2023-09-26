@@ -7,7 +7,7 @@ load("@rules_ocaml//build:rules.bzl",
      "ocaml_signature"
 )
 
-load("//:CONFIG.bzl", "LLVM_DEFINES", "LLVM_LINKOPTS")
+load("@llvm_sdk//:CONFIG.bzl", "LLVM_DEFINES", "LLVM_LINKOPTS")
 
 ocaml_signature(
     name = "Llvm_cmi",

@@ -8,7 +8,7 @@ package(default_visibility=["//visibility:public"])
 ocaml_signature(
     name = "Linker_cmi",
     src = "llvm_linker.mli",
-    deps   = ["//llvm/bindings/ocaml/llvm:Llvm"]
+    deps   = ["//src/llvm:Llvm"]
 )
 
 ocaml_module(
@@ -16,8 +16,8 @@ ocaml_module(
     struct = "llvm_linker.ml",
     sig    = ":Linker_cmi",
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
-        "//llvm/bindings/ocaml/target:Target",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
         ":linker_c"
     ],
 )
@@ -30,14 +30,14 @@ cc_library(
     copts = [
         "-I$(@llvm_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@llvm_sdk//sdk/c/include:llvm-c",
         "@llvm_sdk//sdk/c/lib:linker-libs",
         "@llvm_sdk//sdk/c/lib:target-libs",
         "@ocaml//lib/c:sdk",
-        "//llvm/bindings/ocaml/llvm:llvm_c"
+        "//src/llvm:llvm_c"
     ],
     visibility = ["//visibility:public"],
     toolchains = ["//:repo_paths"]

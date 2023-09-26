@@ -9,7 +9,7 @@ ocaml_signature(
     name = "Ipo_cmi",
     src = "llvm_ipo.mli",
     deps   = [
-        "//llvm/bindings/ocaml/transforms/passmgr_builder:Passmgr_builder",
+        "//src/transforms/passmgr_builder:Passmgr_builder",
     ]
 )
 
@@ -18,8 +18,8 @@ ocaml_module(
     struct = "llvm_ipo.ml",
     sig    = "Ipo_cmi",
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
-        "//llvm/bindings/ocaml/target:Target"
+        "//src/llvm:Llvm",
+        "//src/target:Target"
     ],
     cc_deps = [":ipo_c"]
 )
@@ -29,18 +29,15 @@ cc_library(
     srcs = [
         "ipo_ocaml.c",
     ],
-    # additional_compiler_inputs = [
-    #     "@llvm_toolchain_llvm//:include",
-    # ],
     copts = [
         "-I$(@ocaml)/lib/c",
         "-I$(@llvm_sdk)/sdk/c/include",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@ocaml//lib/c:sdk",
         "@llvm_sdk//sdk/c/include:llvm-c",
-        "//llvm/bindings/ocaml/llvm:Llvm"
+        "//src/llvm:Llvm"
     ],
     visibility = ["//visibility:public"],
     toolchains = ["//:repo_paths"]

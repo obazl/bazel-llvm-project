@@ -8,14 +8,14 @@ package(default_visibility=["//visibility:public"])
 ocaml_signature(
     name = "Bitwriter_cmi",
     src = "llvm_bitwriter.mli",
-    deps   = ["//llvm/bindings/ocaml/llvm:Llvm"]
+    deps   = ["//src/llvm:Llvm"]
 )
 
 ocaml_module(
     name = "Bitwriter",
     struct = "llvm_bitwriter.ml",
     sig    = ":Bitwriter_cmi",
-    deps   = ["//llvm/bindings/ocaml/llvm:Llvm",
+    deps   = ["//src/llvm:Llvm",
               ":bitwriter_c",
               # eliminate warning about "directory
               # layout change" in v5.
@@ -33,7 +33,7 @@ cc_library(
         "-g",
         "-I$(@llvm_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@llvm_sdk//sdk/c/include:llvm-c",
@@ -42,7 +42,7 @@ cc_library(
         "@llvm_sdk//sdk/c/lib:all-libs",
         "@llvm_sdk//sdk/c/lib:bitwriter-libs",
         "@ocaml//lib/c:sdk",
-        "//llvm/bindings/ocaml/llvm:Llvm"
+        "//src/llvm:Llvm"
     ],
     toolchains = ["//:repo_paths"]
 )

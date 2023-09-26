@@ -49,6 +49,5 @@ cc_library(
     defines = ["TARGET=$(LLVM_TARGET_ARCH)"],
     visibility = ["//visibility:public"],
     toolchains = ["//:repo_paths",
-                  "@llvm_sdk//makevars"
-                  ]
+                  "@llvm_sdk//makevars"]
 )

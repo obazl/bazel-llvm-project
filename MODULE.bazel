@@ -5,13 +5,11 @@ module(
     bazel_compatibility = [">=6.0.0"]
 )
 
-llvm_sdk = use_extension("@llvm//:EXTENSIONS.bzl",
-                         "llvm_sdk")
-# always make all targets available; choice of
-# which to use is configured at build time:
-llvm_sdk.config(targets = ["ALL"])
-use_repo(llvm_sdk, "llvm_sdk")
-
+llvm_sdks = use_extension("@llvm//:EXTENSIONS.bzl",
+                          "llvm_sdks")
+llvm_sdks.c(targets = ["ALL"])
+llvm_sdks.ocaml(targets = ["ALL"])
+use_repo(llvm_sdks, "llvm_sdk", "ocaml_llvm")
 
 bazel_dep(name = "platforms",    version = "0.0.7")
 bazel_dep(name = "bazel_skylib", version = "1.4.2")

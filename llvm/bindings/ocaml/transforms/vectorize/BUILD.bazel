@@ -9,8 +9,8 @@ ocaml_signature(
     name = "Vectorize_cmi",
     src  = "llvm_vectorize.mli",
     deps = [
-        "//llvm/bindings/ocaml/transforms/passmgr_builder:Passmgr_builder_cmi",
-        "//llvm/bindings/ocaml/llvm:Llvm_cmi"
+        "//src/transforms/passmgr_builder:Passmgr_builder_cmi",
+        "//src/llvm:Llvm_cmi"
     ]
 )
 
@@ -20,8 +20,8 @@ ocaml_module(
     sig    = ":Vectorize_cmi",
     # opts   = ["-w", "-labels-omitted"], # 6
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
-        "//llvm/bindings/ocaml/target:Target",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
         ":vectorize_c"
     ],
 )
@@ -32,13 +32,13 @@ cc_library(
     copts = [
         "-I$(@ocaml)/lib/c",
         "-I$(@llvm_sdk)/sdk/c/include",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@ocaml//lib/c:sdk",
         "@llvm_sdk//sdk/c/include:llvm-c",
         "@llvm_sdk//sdk/c/lib:vectorize-libs",
-        "//llvm/bindings/ocaml/llvm:llvm_c"
+        "//src/llvm:llvm_c"
     ],
     toolchains = ["//:repo_paths"]
 )

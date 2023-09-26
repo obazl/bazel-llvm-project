@@ -8,7 +8,7 @@ package(default_visibility=["//visibility:public"])
 ocaml_signature(
     name = "Irreader_cmi",
     src = "llvm_irreader.mli",
-    deps   = ["//llvm/bindings/ocaml/llvm:Llvm"]
+    deps   = ["//src/llvm:Llvm"]
 )
 
 ocaml_module(
@@ -16,8 +16,8 @@ ocaml_module(
     struct = "llvm_irreader.ml",
     sig    = ":Irreader_cmi",
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
-        "//llvm/bindings/ocaml/target:Target",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
         ":irreader_c"
     ],
 )
@@ -28,7 +28,7 @@ cc_library(
     copts = [
         "-I$(@ocaml)/lib/c",
         "-I$(@llvm_sdk)/sdk/c/include",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@ocaml//lib/c:sdk",
@@ -36,7 +36,7 @@ cc_library(
         "@llvm_sdk//sdk/c/lib:libLLVMAsmParser",
         "@llvm_sdk//sdk/c/lib:libLLVMIRReader",
         "@llvm_sdk//sdk/c/lib:target-libs",
-        "//llvm/bindings/ocaml/llvm:Llvm"
+        "//src/llvm:Llvm"
     ],
     toolchains = ["//:repo_paths"]
 )

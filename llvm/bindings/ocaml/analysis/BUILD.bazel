@@ -8,7 +8,7 @@ ocaml_signature(
     name = "Analysis_cmi",
     src = "llvm_analysis.mli",
     opts = ["-w", "-unexpected-docstring"], # 50
-    deps = ["//llvm/bindings/ocaml/llvm:Llvm_cmi"]
+    deps = ["//src/llvm:Llvm_cmi"]
 )
 
 ocaml_module(
@@ -16,7 +16,7 @@ ocaml_module(
     struct = "llvm_analysis.ml",
     sig    = "Analysis_cmi",
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
+        "//src/llvm:Llvm",
         ":analysis_c"
     ],
 )
@@ -27,20 +27,20 @@ cc_library(
     srcs = [
         "analysis_ocaml.c",
         # "//src/llvm:llvm_ocaml.h",
-        # "//llvm/bindings/ocaml/llvm:llvm_ocaml.h",
+        # "//src/llvm:llvm_ocaml.h",
     ],
     copts = [
         "-g",
         "-I$(@ocaml)/lib/c",
         "-I$(@llvm_sdk)/sdk/c/include",
         "-I$(@llvm_sdk)/sdk/c/include/llvm/Config",
-        "-I$(@)/llvm/bindings/ocaml/llvm",
+        "-I$(@)/src/llvm",
     ],
     deps = [
         "@ocaml//lib/c:sdk",
         "@llvm_sdk//sdk/c/include:llvm-c",
         "@llvm_sdk//sdk/c/lib:analysis-libs",
-        "//llvm/bindings/ocaml/llvm:llvm_c",
+        "//src/llvm:llvm_c",
     ],
     toolchains = ["//:repo_paths"]
 )

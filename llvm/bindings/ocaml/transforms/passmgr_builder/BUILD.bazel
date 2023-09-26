@@ -7,7 +7,7 @@ package(default_visibility=["//visibility:public"])
 ocaml_signature(
     name = "Passmgr_builder_cmi",
     src = "llvm_passmgr_builder.mli",
-    deps = ["//llvm/bindings/ocaml/llvm:Llvm_cmi"]
+    deps = ["//src/llvm:Llvm_cmi"]
 )
 
 ocaml_module(
@@ -15,8 +15,8 @@ ocaml_module(
     struct = "llvm_passmgr_builder.ml",
     sig    = ":Passmgr_builder_cmi",
     deps   = [
-        "//llvm/bindings/ocaml/llvm:Llvm",
-        "//llvm/bindings/ocaml/target:Target",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
         ":passmgr_builder_c"
     ])
 
@@ -26,13 +26,13 @@ cc_library(
     copts = [
         "-I$(@ocaml)/lib/c",
         "-I$(@llvm_sdk)/sdk/c/include",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
+        "-I$(@)/src/llvm"
     ],
     deps = [
         "@ocaml//lib/c:sdk",
         "@llvm_sdk//sdk/c/include:llvm-c",
         "@llvm_sdk//sdk/c/lib:passes-libs",
-        "//llvm/bindings/ocaml/llvm:llvm_c"
+        "//src/llvm:llvm_c"
     ],
     visibility = ["//visibility:public"],
     toolchains = ["//:repo_paths"])

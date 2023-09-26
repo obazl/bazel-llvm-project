@@ -9,14 +9,14 @@ ocaml_signature(
     name = "Bitreader_cmi",
     src = "Llvm_bitreader.mli",
     opts = ["-w", "-unexpected-docstring"], # 50
-    deps = ["//llvm/bindings/ocaml/llvm:Llvm"]
+    deps = ["//src/llvm:Llvm"]
 )
 
 ocaml_module(
     name = "Bitreader",
     struct = "llvm_bitreader.ml",
     sig    = "Bitreader_cmi",
-    deps   = ["//llvm/bindings/ocaml/llvm:Llvm",
+    deps   = ["//src/llvm:Llvm",
               ":bitreader_c"],
 )
 
@@ -28,8 +28,7 @@ cc_library(
     copts = [
         "-I$(@llvm_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
-        "-I$(@)/llvm/bindings/ocaml/llvm"
-        # "-I$(@)/src/llvm",
+        "-I$(@)/src/llvm",
     ],
     deps = [
         "@llvm_sdk//sdk/c/include:llvm-c",
@@ -40,7 +39,7 @@ cc_library(
         "@llvm_sdk//sdk/c/lib:libLLVMMC",
 
         "@ocaml//lib/c:sdk",
-        "//llvm/bindings/ocaml/llvm:Llvm"
+        "//src/llvm:Llvm"
     ],
     toolchains = ["//:repo_paths"]
 )
