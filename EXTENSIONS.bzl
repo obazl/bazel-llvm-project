@@ -93,6 +93,12 @@ string_setting(
     ## bin dir same for all sdks
     rctx.symlink("{root}/{bld}/bin".format(root=wsroot,bld=bld),
                  "sdk/bin")
+    rctx.file(
+        "sdk/bin/BUILD.bazel".format(root=wsroot,bld=bld),
+        content = """
+exports_files(glob(["**"]))
+"""
+    )
 
     rctx.symlink("{root}/{bld}/include/llvm".format(root=wsroot,bld=bld),
                  "sdk/c/include/llvm")

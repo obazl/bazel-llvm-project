@@ -7,6 +7,10 @@ load(
     "ocaml_module",
     "ocaml_test",
 )
+load("@llvm//utils/bazel:RULES.bzl",
+     "bitcode_gen",
+     "filecheck_test",
+     "llvm_dis")
 
 TEST_OPTS = [
     # "-verbose",
@@ -123,13 +127,14 @@ ocaml_module(
               "//src/bitwriter:Bitwriter"])
 
 ###########
-ocaml_test(
-    name = "core_test",
-    args = ["bitcode.bc"],
+# ocaml_test(
+ocaml_binary(
+    name = "core",
+    # args = ["core.bc"],
     main = ":Core",
     opts = TEST_OPTS,
     toolchains = ["//:repo_paths"],
-    timeout = "short"
+    # timeout = "short"
 )
 
 ocaml_module(
@@ -441,4 +446,28 @@ build_test(
         "//src/transforms/utils:transform_utils_c",
         # "//src/transforms/vectorize:vectorize_c",
         ]
+)
+
+################
+# * RUN: %t/executable %t/bitcode.bc
+# * RUN: llvm-dis < %t/bitcode.bc > %t/dis.ll
+# * RUN: FileCheck %s < %t/dis.ll
+
+bitcode_gen(
+    name = "core_bc",
+    tool = ":core",
+    out  = "core.bc"
+)
+
+llvm_dis(
+    name     = "core_dis",
+    bitcode  = ":core.bc",
+    ll       = "core_dis.ll"
+)
+
+filecheck_test(
+    name = "core_fc",
+    match_file = "core.ml",
+    data = ":core_dis.ll",
+    timeout = "short"
 )
