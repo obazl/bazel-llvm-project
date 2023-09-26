@@ -1,12 +1,12 @@
+LLVM_VERSION = "15.0.0"
+LLVM_BUILD_DIR = ".build." + LLVM_VERSION
+
 module(
     name = "llvm",
-    version = "15.0.0",
+    version = LLVM_VERSION,
     compatibility_level = 15,
     bazel_compatibility = [">=6.0.0"]
 )
-
-LLVM_VERSION = "15.0.0"
-LLVM_BUILD_DIR = ".build." + LLVM_VERSION
 
 llvm_sdks = use_extension("@llvm//:EXTENSIONS.bzl",
                           "llvm_sdks")
