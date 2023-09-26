@@ -1,0 +1,51 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_signature(
+    name = "Executionengine_cmi",
+    src = "llvm_executionengine.mli",
+    opts = ["-w", "-unexpected-docstring"], # 50
+    deps = [
+        "@ctypes//lib/ctypes",
+        "//src/target:Target_cmi"
+    ]
+)
+
+ocaml_module(
+    name = "Executionengine",
+    struct = "llvm_executionengine.ml",
+    sig    = ":Executionengine_cmi",
+    opts   = ["-w", "-labels-omitted", # 6
+              "-w", "-no-cmx-file"],   # 58
+    deps   = [
+        "@ctypes//lib/ctypes",
+        "@ctypes//lib/foreign",
+        "//src/llvm:Llvm",
+        "//src/target:Target",
+        ":executionengine_c"
+    ],
+)
+
+cc_library(
+    name = "executionengine_c",
+    srcs = ["executionengine_ocaml.c"],
+    copts = [
+        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@ocaml)/lib/c",
+        "-I$(@)/src/llvm"
+    ],
+    deps = [
+        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@llvm_sdk//sdk/c/lib:executionengine-libs",
+        "@llvm_sdk//sdk/c/lib:mcjit-libs",
+        "@llvm_sdk//sdk/c/lib:native-libs",
+        # "@llvm_sdk//lib:all-targets-libs",
+        "@ocaml//lib/c:sdk",
+        "//src/llvm:Llvm"
+    ],
+    toolchains = ["//:repo_paths"]
+)

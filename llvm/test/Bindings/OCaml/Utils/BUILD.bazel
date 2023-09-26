@@ -1,0 +1,9 @@
+load("@rules_ocaml//build:rules.bzl", "ocaml_module")
+
+package(default_visibility=["//visibility:public"])
+
+ocaml_module(
+    name = "Testsuite",
+    struct = "Testsuite.ml",
+    deps   = ["//src/bitreader:Bitreader",
+              "//src/bitwriter:Bitwriter"])
