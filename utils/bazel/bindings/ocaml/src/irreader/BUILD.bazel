@@ -3,6 +3,9 @@ load("@rules_ocaml//build:rules.bzl",
      "ocaml_signature"
 )
 
+load("@llvm_c_sdk//:CONFIG.bzl", "LLVM_DEFINES", "LLVM_LINKOPTS",
+     "COPTS")
+
 package(default_visibility=["//visibility:public"])
 
 ocaml_signature(
@@ -25,17 +28,19 @@ ocaml_module(
 cc_library(
     name = "irreader_c",
     srcs = ["irreader_ocaml.c"],
-    copts = [
+    copts = COPTS + [
         "-I$(@ocaml)/lib/c",
-        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@)/src/llvm"
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
         "@ocaml//lib/c:sdk",
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:libLLVMAsmParser",
-        "@llvm_sdk//sdk/c/lib:libLLVMIRReader",
-        "@llvm_sdk//sdk/c/lib:target-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:libLLVMAsmParser",
+        "@llvm_c_sdk//sdk/c/lib:libLLVMIRReader",
+        "@llvm_c_sdk//sdk/c/lib:target-libs",
         "//src/llvm:Llvm"
     ],
     toolchains = ["//:repo_paths"]

@@ -5,6 +5,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Bitreader_cmi",
     src = "Llvm_bitreader.mli",
@@ -16,6 +19,7 @@ ocaml_module(
     name = "Bitreader",
     struct = "llvm_bitreader.ml",
     sig    = "Bitreader_cmi",
+    opts = ["-g"],
     deps   = ["//src/llvm:Llvm",
               ":bitreader_c"],
 )
@@ -25,19 +29,16 @@ cc_library(
     srcs = [
         "bitreader_ocaml.c",
     ],
-    copts = [
-        "-I$(@llvm_sdk)/sdk/c/include",
+    copts = COPTS + [
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
         "-I$(@)/src/llvm",
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:mc-libs",
-        "@llvm_sdk//sdk/c/lib:mcjit-libs",
-        "@llvm_sdk//sdk/c/lib:all-targets-libs",
-        "@llvm_sdk//sdk/c/lib:bitreader-libs",
-        "@llvm_sdk//sdk/c/lib:libLLVMMC",
-
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:bitreader-libs",
         "@ocaml//lib/c:sdk",
         "//src/llvm:Llvm"
     ],

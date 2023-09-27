@@ -5,6 +5,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Ipo_cmi",
     src = "llvm_ipo.mli",
@@ -26,17 +29,17 @@ ocaml_module(
 
 cc_library(
     name = "ipo_c",
-    srcs = [
-        "ipo_ocaml.c",
-    ],
-    copts = [
+    srcs = ["ipo_ocaml.c"],
+    copts = COPTS + [
         "-I$(@ocaml)/lib/c",
-        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@)/src/llvm"
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
         "@ocaml//lib/c:sdk",
-        "@llvm_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
         "//src/llvm:Llvm"
     ],
     visibility = ["//visibility:public"],

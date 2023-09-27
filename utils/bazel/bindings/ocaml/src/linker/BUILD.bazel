@@ -5,6 +5,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Linker_cmi",
     src = "llvm_linker.mli",
@@ -24,18 +27,17 @@ ocaml_module(
 
 cc_library(
     name = "linker_c",
-    srcs = [
-        "linker_ocaml.c",
-    ],
-    copts = [
-        "-I$(@llvm_sdk)/sdk/c/include",
+    srcs = ["linker_ocaml.c"],
+    copts = COPTS + [
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
         "-I$(@)/src/llvm"
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:linker-libs",
-        "@llvm_sdk//sdk/c/lib:target-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:linker-libs",
         "@ocaml//lib/c:sdk",
         "//src/llvm:llvm_c"
     ],

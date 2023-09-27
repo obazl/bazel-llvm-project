@@ -5,6 +5,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Debuginfo_cmi",
     src = "llvm_debuginfo.mli",
@@ -22,14 +25,16 @@ ocaml_module(
 cc_library(
     name = "debuginfo_c",
     srcs = ["debuginfo_ocaml.c"],
-    copts = [
-        "-I$(@llvm_sdk)/sdk/c/include",
+    copts = COPTS + [
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
         "-I$(@)/src/llvm"
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:all-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:all-libs",
         "@ocaml//lib/c:sdk",
         "//src/llvm:Llvm"
     ],

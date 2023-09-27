@@ -4,6 +4,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Analysis_cmi",
     src = "llvm_analysis.mli",
@@ -29,18 +32,19 @@ cc_library(
         # "//src/llvm:llvm_ocaml.h",
         # "//src/llvm:llvm_ocaml.h",
     ],
-    copts = [
-        "-g",
+    copts = COPTS + [
         "-I$(@ocaml)/lib/c",
-        "-I$(@llvm_sdk)/sdk/c/include",
-        "-I$(@llvm_sdk)/sdk/c/include/llvm/Config",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
+        "-I$(@llvm_c_sdk)/sdk/c/include/llvm/Config",
         "-I$(@)/src/llvm",
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
         "@ocaml//lib/c:sdk",
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:all-libs",
-        # "@llvm_sdk//sdk/c/lib:analysis-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:all-libs",
+        # "@llvm_c_sdk//sdk/c/lib:analysis-libs",
         "//src/llvm:llvm_c",
     ],
     toolchains = ["//:repo_paths"]

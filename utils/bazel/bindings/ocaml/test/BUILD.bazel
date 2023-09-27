@@ -17,7 +17,7 @@ TEST_OPTS = [
     # "-verbose",
     # "-ccopt", "-Wl,-v", ## pass verbose to assembler
 
-    "-g",
+    # "-g",
     "-cclib", "-lm",
     "-cclib", "-lz",
     "-cclib", "-lstdc++",
@@ -108,6 +108,7 @@ ocaml_test(
 ocaml_module(
     name = "Bitreader",
     struct = "bitreader.ml",
+    opts = ["-g"],
     deps   = ["//src/bitreader:Bitreader",
               "//src/bitwriter:Bitwriter"])
 
@@ -136,7 +137,7 @@ ocaml_binary(
     opts = TEST_OPTS,
     toolchains = ["//:repo_paths"],
     # timeout = "short"
-    cc_deps = {"@llvm_sdk//sdk/c/lib:core-libs": "static"}
+    cc_deps = {"@llvm_c_sdk//sdk/c/lib:core-libs": "static"}
 )
 
 ocaml_module(
