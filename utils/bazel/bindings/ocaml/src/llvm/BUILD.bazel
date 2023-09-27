@@ -7,7 +7,8 @@ load("@rules_ocaml//build:rules.bzl",
      "ocaml_signature"
 )
 
-load("@llvm_sdk//:CONFIG.bzl", "LLVM_DEFINES", "LLVM_LINKOPTS")
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
 
 ocaml_signature(
     name = "Llvm_cmi",
@@ -28,20 +29,17 @@ cc_library(
         "llvm_ocaml.c",
     ],
     hdrs = ["llvm_ocaml.h"],
-    copts = [
-        "-g",
-        "-O0",
-        "-I$(@llvm_sdk)/sdk/c/include",
+    copts = COPTS + [
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
-    ],
+   ],
     local_defines = LLVM_DEFINES,
     linkopts = LLVM_LINKOPTS,
     deps = [
         "@ocaml//lib/c:sdk",
-
-        # "@llvm_sdk//include:llvm-c",
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:all-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        # "@llvm_c_sdk//sdk/c/lib:core-libs",
+        "@llvm_c_sdk//sdk/c/lib:all-libs",
     ],
     visibility = ["//visibility:public"],
     toolchains = ["//:repo_paths"]

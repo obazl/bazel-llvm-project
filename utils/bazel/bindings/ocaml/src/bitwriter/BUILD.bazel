@@ -5,6 +5,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Bitwriter_cmi",
     src = "llvm_bitwriter.mli",
@@ -26,21 +29,17 @@ ocaml_module(
 
 cc_library(
     name = "bitwriter_c",
-    srcs = [
-        "bitwriter_ocaml.c",
-    ],
-    copts = [
-        "-g",
-        "-I$(@llvm_sdk)/sdk/c/include",
+    srcs = ["bitwriter_ocaml.c"],
+    copts = COPTS + [
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@ocaml)/lib/c",
         "-I$(@)/src/llvm"
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:libLLVMCodeGen",
-        "@llvm_sdk//sdk/c/lib:libLLVMTarget",
-        "@llvm_sdk//sdk/c/lib:all-libs",
-        "@llvm_sdk//sdk/c/lib:bitwriter-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:bitwriter-libs",
         "@ocaml//lib/c:sdk",
         "//src/llvm:Llvm"
     ],

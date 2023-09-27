@@ -40,7 +40,7 @@ filecheck_test = rule(
     doc = """Runs FileCheck""",
     attrs = dict(
         _tool = attr.label(
-            default = "@llvm_sdk//sdk/bin:FileCheck",
+            default = "@llvm_c_sdk//sdk/bin:FileCheck",
             allow_single_file = True,
             executable = True,
             cfg = "exec"
@@ -62,7 +62,7 @@ filecheck_test = rule(
 ################################################################
 def _bitcode_gen_impl(ctx):
 
-    print("BITCODE gen: %s" % ctx.outputs.out)
+    # print("BITCODE gen: %s" % ctx.outputs.out)
 
     ctx.actions.run(
         outputs = [ctx.outputs.out],
@@ -100,7 +100,7 @@ bitcode_gen = rule(
 ################################################################
 def _llvm_dis_impl(ctx):
 
-    print("llvm-dis: %s" % ctx.file.bitcode)
+    # print("llvm-dis: %s" % ctx.file.bitcode)
 
     ctx.actions.run(
         inputs  = [ctx.file.bitcode],
@@ -127,7 +127,7 @@ llvm_dis = rule(
     doc = """Runs llvm-dis tool""",
     attrs = dict(
         _tool = attr.label(
-            default = "@llvm_sdk//sdk/bin:llvm-dis",
+            default = "@llvm_c_sdk//sdk/bin:llvm-dis",
             allow_single_file = True,
             executable = True,
             cfg = "exec"

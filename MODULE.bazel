@@ -8,21 +8,30 @@ module(
     bazel_compatibility = [">=6.0.0"]
 )
 
-llvm_sdks = use_extension("@llvm//:EXTENSIONS.bzl",
-                          "llvm_sdks")
-llvm_sdks.c(
+llvm_sdk = use_extension(
+    # "@llvm//:EXTENSIONS.bzl",
+    "@llvm//utils/bazel:EXTENSIONS.bzl",
+    "llvm_sdk"
+)
+# llvm_sdk.config(
+#     version = LLVM_VERSION,
+#     llvm_build_dir = LLVM_BUILD_DIR
+# )
+llvm_sdk.c(
     version = LLVM_VERSION,
-    build_dir = LLVM_BUILD_DIR,
+    llvm_build_dir = LLVM_BUILD_DIR,
     targets = ["ALL"]
 )
-llvm_sdks.ocaml(
+llvm_sdk.ocaml(
     version = LLVM_VERSION,
-    build_dir = LLVM_BUILD_DIR,
+    llvm_build_dir = LLVM_BUILD_DIR,
+    ocaml_srcs = """/Users/gar/tmp/llvm-dune-full-minified-15.0.7+nnp-2/llvm-project/llvm/bindings/ocaml""",
     targets = ["ALL"]
 )
-use_repo(llvm_sdks,
-         "llvm_sdk", "llvm_tools",
-         "ocaml_llvm")
+use_repo(llvm_sdk,
+         "llvm_tools",
+         "llvm_c_sdk",
+         ocaml_llvm = "llvm_ocaml_sdk")
 
 bazel_dep(name = "platforms",    version = "0.0.7")
 bazel_dep(name = "bazel_skylib", version = "1.4.2")

@@ -4,6 +4,9 @@ load("@rules_ocaml//build:rules.bzl",
 
 package(default_visibility=["//visibility:public"])
 
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
 ocaml_signature(
     name = "Passmgr_builder_cmi",
     src = "llvm_passmgr_builder.mli",
@@ -23,15 +26,17 @@ ocaml_module(
 cc_library(
     name = "passmgr_builder_c",
     srcs = ["passmgr_builder_ocaml.c"],
-    copts = [
+    copts = COPTS + [
         "-I$(@ocaml)/lib/c",
-        "-I$(@llvm_sdk)/sdk/c/include",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
         "-I$(@)/src/llvm"
     ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
     deps = [
         "@ocaml//lib/c:sdk",
-        "@llvm_sdk//sdk/c/include:llvm-c",
-        "@llvm_sdk//sdk/c/lib:passes-libs",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:passes-libs",
         "//src/llvm:llvm_c"
     ],
     visibility = ["//visibility:public"],

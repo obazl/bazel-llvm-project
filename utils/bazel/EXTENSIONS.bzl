@@ -1,6 +1,56 @@
-load(":libs.bzl", "genlibsmap")
-
 # info on targets: llvm-project/docs/GettingStarted.rst
+
+#####################
+# used by @llvm_c_sdk
+def genlibsmap(rctx):
+
+    libsmap = {}
+
+    stanzas = ""
+
+    ## every component
+    components = rctx.execute(["./sdk/bin/llvm-config",
+                               "--link-static",
+                               "--components"])
+
+    for component in components.stdout.strip().split(" "):
+        libs = rctx.execute(["./sdk/bin/llvm-config",
+                             "--link-static",
+                             "--libs",
+                             component])
+        # print("COMP: %s" % component)
+
+        liblist = ["\"lib" + lib[2:] + ".a\"" for lib in libs.stdout.strip().split(" ")]
+
+        stanza = """
+cc_library(name = "{c}-libs",
+           srcs = [{libs}])
+""".format(c=component,
+           libs= ", ".join(liblist))
+
+        stanzas = stanzas + stanza
+
+    libsmap["{{COMPONENTS}}"] = stanzas
+
+    stanzas = ""
+    ## every lib
+    libs = rctx.execute(["./sdk/bin/llvm-config", "--link-static",
+                         "--libs"])
+    if libs.return_code != 0:
+        print("ERROR llvm-config --link-static --libs: %s" % libs.stderr)
+
+    for lib in libs.stdout.strip().split(" "):
+        libname = "lib" + lib[2:]
+        filename = libname + ".a"
+        stanza = """
+cc_import(name = "{libname}",
+          static_library = "{fname}")
+""".format(libname=libname, fname = filename)
+        stanzas = stanzas + stanza
+
+    libsmap["{{EVERY_LIB}}"] = stanzas
+
+    return libsmap
 
 ################################################################
 supported = [
@@ -32,14 +82,14 @@ archmap = {
 
 ################################################################
 #### C SDK repo rule ####
-def _llvm_sdk_impl(rctx):
+def _llvm_c_sdk_impl(rctx):
     print("LLVM_SDK REPO RULE")
 
     rctx.file(
         "MODULE.bazel",
         content = """
 module(
-    name = "llvm_sdk",
+    name = "llvm_c_sdk",
     version = "17.0.1",
     compatibility_level = 17,
 )
@@ -54,6 +104,12 @@ module(
     rctx.file(
         "CONFIG.bzl",
         content = """
+COPTS = [
+    "-g",
+    "-O0",
+    "-UDEBUG" # macos fastbuild
+]
+
 LLVM_DEFINES = [
     "__STDC_CONSTANT_MACROS",
     "__STDC_FORMAT_MACROS",
@@ -94,7 +150,7 @@ LLVM_LINKOPTS = [
     ## bin dir same for all sdks
     rctx.symlink("{root}/{bld}/bin".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/bin")
     rctx.file(
         "sdk/bin/BUILD.bazel",
@@ -105,7 +161,7 @@ exports_files(glob(["**"]))
 
     rctx.symlink("{root}/{bld}/include/llvm".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/c/include/llvm")
 
     # rctx.symlink("{root}/llvm/include/llvm".format(root=wsroot,bld=bld),
@@ -134,17 +190,17 @@ cc_library(
 
     rctx.symlink("{root}/{bld}/lib".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/c/lib")
     rctx.symlink("{root}/{bld}/libexec".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/c/libexec")
 
     libsmap = genlibsmap(rctx)
     rctx.template(
         "sdk/c/lib/BUILD.bazel",
-        Label(":BUILD.lib_pkg"),
+        Label("//utils/bazel:BUILD.lib_pkg"),
         substitutions = libsmap,
         executable = False,
     )
@@ -223,16 +279,16 @@ config_setting(name = "x86",
 """
     )
 
-    ## end of _llvm_sdk repo rule
+    ## end of _llvm_c_sdk repo rule
 
 ############
-_llvm_sdk = repository_rule(
-    implementation = _llvm_sdk_impl,
+_llvm_c_sdk = repository_rule(
+    implementation = _llvm_c_sdk_impl,
     local = True,
     attrs = {
         "version_file": attr.string(),
         "llvm": attr.label(),
-        "build_dir": attr.string(mandatory = True),
+        "llvm_build_dir": attr.string(mandatory = True),
 
         # "_ml_template": attr.label(
         #     default = "//src/backends/llvm_backend.ml.in"
@@ -275,12 +331,18 @@ module(
     wsroot = rctx.workspace_root
 
     rctx.symlink(
-        "{}/utils/bazel/RULES.bzl".format(wsroot),
-        "RULES.bzl")
+        "{}/utils/bazel/TOOLS.bzl".format(wsroot),
+        "TOOLS.bzl")
 
     rctx.file(
         "CONFIG.bzl",
         content = """
+COPTS = [
+    "-g",
+    "-O0",
+    "-UDEBUG" # macos fastbuild
+]
+
 LLVM_DEFINES = [
     "__STDC_CONSTANT_MACROS",
     "__STDC_FORMAT_MACROS",
@@ -308,7 +370,7 @@ LLVM_LINKOPTS = [
     ## bin dir same for all sdks
     rctx.symlink("{root}/{bld}/bin".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/bin")
     rctx.file(
         "sdk/bin/BUILD.bazel",
@@ -319,11 +381,11 @@ exports_files(glob(["**"]))
 
     rctx.symlink("{root}/{bld}/lib".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/c/lib")
     rctx.symlink("{root}/{bld}/libexec".format(
         root=wsroot,
-        bld=rctx.attr.build_dir),
+        bld=rctx.attr.llvm_build_dir),
                  "sdk/c/libexec")
 
     # libsmap = genlibsmap(rctx)
@@ -418,7 +480,7 @@ _llvm_tools = repository_rule(
     attrs = {
         "version_file": attr.string(),
         "llvm": attr.label(),
-        "build_dir": attr.string(mandatory = True),
+        "llvm_build_dir": attr.string(mandatory = True),
 
         # "_ml_template": attr.label(
         #     default = "//src/backends/llvm_backend.ml.in"
@@ -461,7 +523,7 @@ load("@cc_config//:MACROS.bzl", "repo_paths")
 load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
 
 PROD_REPOS = [
-    "@llvm_sdk//version",
+    "@llvm_c_sdk//version",
     "@ocaml//version"
 ]
 
@@ -506,13 +568,65 @@ repo_paths(
     ##  llvm-project/llvm/bindings/ocaml
     ##  llvm-project/llvm/test/Bindings/OCaml
 
-    rctx.symlink("{root}/llvm/bindings/ocaml".format(
-        root=wsroot), "src")
+    ## we can only symlink one file at a time,
+    ## so we need a complete enumeration
 
-    rctx.symlink("{root}/llvm/test/Bindings/OCaml".format(
-        root=wsroot), "test")
+    ## first the src BUILD.bazel & .bzl files
+    pfx = "{}/utils/bazel/bindings/ocaml/src".format(wsroot)
+    llvm_build_files = rctx.execute([
+        "find", pfx, "-type", "f",
+        "-name", "BUILD.bazel",
+        "-o", "-name", "*.bzl"
+    ])
+    for f in llvm_build_files.stdout.splitlines():
+        tail = f.removeprefix(pfx)
+        rctx.symlink(f, "src/{}".format(tail))
 
-    ## end of _ocaml_sdk repo rule
+    ## then the sdk sources
+    # pfx = "/Users/gar/tmp/llvm-dune-full-minified-15.0.7+nnp-2/llvm-project/llvm/bindings/ocaml"
+
+    if rctx.attr.ocaml_srcs:
+        test = rctx.read(rctx.attr.ocaml_srcs + "/llvm/llvm_ocaml.c")
+        pfx = rctx.attr.ocaml_srcs
+    else:
+        ## in-tree
+        pfx = "{}/llvm/bindings/ocaml".format(wsroot)
+
+    llvm_srcs = rctx.execute([
+        "find",
+        pfx,
+        "-type", "f",
+        "-name", "*.[c|h]",
+        "-o", "-name", "*.mli",
+        "-o", "-name", "*.ml",
+    ])
+    for f in llvm_srcs.stdout.splitlines():
+        tail = f.removeprefix(pfx)
+        rctx.symlink(f, "src/{}".format(tail))
+
+    ## now the test srcs
+    pfx = "{}/llvm/test/Bindings/OCaml".format(wsroot)
+    llvm_srcs = rctx.execute([
+        "find",
+        pfx,
+        "-type", "f",
+        "-name", "*.mli",
+        "-o", "-name", "*.ml",
+    ])
+    for f in llvm_srcs.stdout.splitlines():
+        tail = f.removeprefix(pfx)
+        rctx.symlink(f, "test/{}".format(tail))
+
+    ## and test BUILD.bazel files
+    pfx = "{}/utils/bazel/bindings/ocaml/test".format(wsroot)
+    llvm_build_files = rctx.execute([
+        "find", pfx, "-type", "f", "-name", "BUILD.bazel"
+    ])
+    for f in llvm_build_files.stdout.splitlines():
+        tail = f.removeprefix(pfx)
+        rctx.symlink(f, "test/{}".format(tail))
+
+    ## end of _ocaml_sdk repo rule ##
 
 ############
 _ocaml_sdk = repository_rule(
@@ -522,7 +636,8 @@ _ocaml_sdk = repository_rule(
         "version_file": attr.string(),
         "llvm": attr.label(),
         "c_sdk": attr.label(),
-        "build_dir": attr.string(mandatory = True),
+        "llvm_build_dir": attr.string(mandatory = True),
+        "ocaml_srcs": attr.string(mandatory = False),
         # "_ml_template": attr.label(
         #     default = "//src/backends/llvm_backend.ml.in"
         # ),
@@ -543,7 +658,7 @@ _ocaml_sdk = repository_rule(
 ##############
 _sdk_attrs = {
     "version": attr.string(),
-    "build_dir": attr.string(
+    "llvm_build_dir": attr.string(
         mandatory = True
     ),
     "targets": attr.string_list(
@@ -558,12 +673,17 @@ _sdk_attrs = {
 
 #### TAG CLASSES ####
 _c_sdk_tag = tag_class(attrs = _sdk_attrs)
-_ocaml_sdk_tag = tag_class(attrs = _sdk_attrs)
+
+_ocaml_attrs = dict(_sdk_attrs)
+_ocaml_attrs.update({
+    "ocaml_srcs": attr.string()
+})
+_ocaml_sdk_tag = tag_class(attrs = _ocaml_attrs )
 
 
 #### EXTENSION IMPL ####
-def _llvm_sdks_impl(mctx):
-    print("LLVM_SDKS EXTENSION")
+def _llvm_sdk_impl(mctx):
+    print("LLVM_SDK EXTENSION")
 
     # result = mctx.execute(["pwd"])
     # print("PWD: %s" % result.stdout)
@@ -574,13 +694,13 @@ def _llvm_sdks_impl(mctx):
     # result = mctx.which("llvm-config")
     # print("which llvm-config: %s" % result)
 
+    llvm_build_dir = None
+
     c_sdk = False
     c_sdk_version = None
-    c_sdk_build_dir = None
 
     ocaml_sdk = False
     ocaml_sdk_version = None
-    ocaml_sdk_build_dir = None
 
     # collect artifacts from across the dependency graph
     targets = []
@@ -598,7 +718,10 @@ def _llvm_sdks_impl(mctx):
         for config in mod.tags.c:
             c_sdk = True
             print("C SDK config")
-            c_sdk_build_dir = config.build_dir
+            if llvm_build_dir == None:
+                llvm_build_dir = config.llvm_build_dir
+            elif llvm_build_dir != config.llvm_build_dir:
+                fail("Must use same llvm_build_dir for all sdks")
             c_sdk_version = config.version
             for target in config.targets:
                 print("TARGET: %s" % target)
@@ -607,17 +730,18 @@ def _llvm_sdks_impl(mctx):
         for config in mod.tags.ocaml:
             print("OCAML SDK config")
             ocaml_sdk = True
-            ocaml_sdk_build_dir = config.build_dir
+            if llvm_build_dir == None:
+                llvm_build_dir = config.llvm_build_dir
+            elif llvm_build_dir != config.llvm_build_dir:
+                fail("Must use same llvm_build_dir for all sdks")
             ocaml_sdk_version = config.version
+            ocaml_srcs = config.ocaml_srcs
             for target in config.targets:
                 print("TARGET: %s" % target)
                 targets.append(target)
 
     if c_sdk_version != ocaml_sdk_version:
         fail("Must use same version for all sdks")
-
-    if c_sdk_build_dir != ocaml_sdk_build_dir:
-        fail("Must use same build dir for all sdks")
 
     # mctx.file("WORKSPACE.bazel", content = "#test")
     # mctx.file("XXXXXXXXXXXXXXXXTEST", content = "#test")
@@ -639,28 +763,29 @@ string_setting(
     print("VFILE: %s" % vfile)
 
     if c_sdk:
-        _llvm_sdk(name = "llvm_sdk",
-                  version_file = str(vfile),
-                  build_dir = c_sdk_build_dir,
-                  llvm = "@llvm",
-                  targets = targets)
+        _llvm_c_sdk(name = "llvm_c_sdk",
+                    version_file = str(vfile),
+                    llvm_build_dir = llvm_build_dir,
+                    llvm = "@llvm",
+                    targets = targets)
         _llvm_tools(name = "llvm_tools",
                     version_file = str(vfile),
-                    build_dir = c_sdk_build_dir,
+                    llvm_build_dir = llvm_build_dir,
                     llvm = "@llvm",
                     targets = targets)
 
     if ocaml_sdk:
-        _ocaml_sdk(name = "ocaml_llvm",
-                  version_file = str(vfile),
-                   build_dir = ocaml_sdk_build_dir,
+        _ocaml_sdk(name = "llvm_ocaml_sdk",
+                   version_file = str(vfile),
+                   llvm_build_dir = llvm_build_dir,
+                   ocaml_srcs = ocaml_srcs,
                    llvm = "@llvm",
-                   c_sdk = "@llvm_sdk",
+                   c_sdk = "@llvm_c_sdk",
                    targets = targets)
 
 ##############################
-llvm_sdks = module_extension(
-  implementation = _llvm_sdks_impl,
+llvm_sdk = module_extension(
+  implementation = _llvm_sdk_impl,
   tag_classes = {"c": _c_sdk_tag,
                  "ocaml": _ocaml_sdk_tag},
 )
