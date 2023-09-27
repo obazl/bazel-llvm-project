@@ -1,0 +1,48 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
+ocaml_signature(
+    name = "Transform_utils_cmi",
+    src  = "llvm_transform_utils.mli",
+    deps = [
+        "//src/llvm:Llvm_cmi"
+    ]
+)
+
+ocaml_module(
+    name = "Transform_utils",
+    struct = "llvm_transform_utils.ml",
+    sig    = ":Transform_utils_cmi",
+    deps   = [
+        "//src/llvm:Llvm",
+        "//src/target:Target",
+        ":transform_utils_c"
+    ],
+)
+
+cc_library(
+    name = "transform_utils_c",
+    srcs = ["transform_utils_ocaml.c"],
+    copts = COPTS + [
+        "-I$(@ocaml)/lib/c",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
+        "-I$(@)/src/llvm"
+    ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
+    deps = [
+        "@ocaml//lib/c:sdk",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:transformutils-libs",
+        "//src/llvm:llvm_c"
+    ],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths"]
+)

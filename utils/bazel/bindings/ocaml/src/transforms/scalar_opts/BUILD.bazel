@@ -1,0 +1,49 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature"
+)
+
+package(default_visibility=["//visibility:public"])
+
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
+ocaml_signature(
+    name = "Scalar_opts_cmi",
+    src  = "llvm_scalar_opts.mli",
+    deps = [
+        "//src/transforms/passmgr_builder:Passmgr_builder_cmi",
+        "//src/llvm:Llvm_cmi",
+    ]
+)
+
+ocaml_module(
+    name = "Scalar_opts",
+    struct = "llvm_scalar_opts.ml",
+    sig    = ":Scalar_opts_cmi",
+    # opts   = ["-w", "-labels-omitted"], # 6
+    deps   = [
+        "//src/llvm:Llvm",
+        "//src/target:Target",
+        ":scalar_opts_c"
+    ],
+)
+
+cc_library(
+    name = "scalar_opts_c",
+    srcs = ["scalar_opts_ocaml.c"],
+    copts = COPTS + [
+        "-I$(@ocaml)/lib/c",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
+        "-I$(@)/src/llvm"
+    ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
+    deps = [
+        "@ocaml//lib/c:sdk",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "//src/llvm:llvm_c"
+    ],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths"]
+)

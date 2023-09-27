@@ -1,0 +1,51 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature")
+
+package(default_visibility=["//visibility:public"])
+
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
+ocaml_signature(
+    name = "Analysis_cmi",
+    src = "llvm_analysis.mli",
+    opts = ["-w", "-unexpected-docstring"], # 50
+    deps = ["//src/llvm:Llvm_cmi"]
+)
+
+ocaml_module(
+    name = "Analysis",
+    struct = "llvm_analysis.ml",
+    sig    = "Analysis_cmi",
+    deps   = [
+        "//src/llvm:Llvm",
+        ":analysis_c"
+    ],
+)
+
+cc_library(
+    name = "analysis_c",
+    alwayslink = True,
+    srcs = [
+        "analysis_ocaml.c",
+        # "//src/llvm:llvm_ocaml.h",
+        # "//src/llvm:llvm_ocaml.h",
+    ],
+    copts = COPTS + [
+        "-I$(@ocaml)/lib/c",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
+        "-I$(@llvm_c_sdk)/sdk/c/include/llvm/Config",
+        "-I$(@)/src/llvm",
+    ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
+    deps = [
+        "@ocaml//lib/c:sdk",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:all-libs",
+        # "@llvm_c_sdk//sdk/c/lib:analysis-libs",
+        "//src/llvm:llvm_c",
+    ],
+    toolchains = ["//:repo_paths"]
+)

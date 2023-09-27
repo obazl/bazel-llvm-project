@@ -1,0 +1,43 @@
+load("@rules_ocaml//build:rules.bzl",
+     "ocaml_module",
+     "ocaml_signature")
+
+package(default_visibility=["//visibility:public"])
+
+load("@llvm_c_sdk//:CONFIG.bzl",
+     "LLVM_DEFINES", "LLVM_LINKOPTS", "COPTS")
+
+ocaml_signature(
+    name = "Passmgr_builder_cmi",
+    src = "llvm_passmgr_builder.mli",
+    deps = ["//src/llvm:Llvm_cmi"]
+)
+
+ocaml_module(
+    name = "Passmgr_builder",
+    struct = "llvm_passmgr_builder.ml",
+    sig    = ":Passmgr_builder_cmi",
+    deps   = [
+        "//src/llvm:Llvm",
+        "//src/target:Target",
+        ":passmgr_builder_c"
+    ])
+
+cc_library(
+    name = "passmgr_builder_c",
+    srcs = ["passmgr_builder_ocaml.c"],
+    copts = COPTS + [
+        "-I$(@ocaml)/lib/c",
+        "-I$(@llvm_c_sdk)/sdk/c/include",
+        "-I$(@)/src/llvm"
+    ],
+    linkopts = LLVM_LINKOPTS,
+    local_defines  = LLVM_DEFINES,
+    deps = [
+        "@ocaml//lib/c:sdk",
+        "@llvm_c_sdk//sdk/c/include:llvm-c",
+        "@llvm_c_sdk//sdk/c/lib:passes-libs",
+        "//src/llvm:llvm_c"
+    ],
+    visibility = ["//visibility:public"],
+    toolchains = ["//:repo_paths"])
