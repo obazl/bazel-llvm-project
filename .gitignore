@@ -6,6 +6,15 @@
 # as most of those are useless.
 #==============================================================================#
 
+#### bazel gitignore ####
+.bazelignore
+.bazeliskrc
+.bazelversion
+.bazel
+bazel-*
+*.gz
+.build*
+
 #==============================================================================#
 # File extensions to be ignored anywhere in the tree.
 #==============================================================================#
