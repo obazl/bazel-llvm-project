@@ -716,15 +716,31 @@ val subtypes : lltype -> lltype array
     [ty]. See the method [llvm::ArrayType::get]. *)
 val array_type : lltype -> int -> lltype
 
-(** [pointer_type context] returns the pointer type in the default
-    address space (0).
+(** [pointer_type ty] returns the pointer type referencing objects of type
+    [ty] in the default address space (0).
     See the method [llvm::PointerType::getUnqual]. *)
-val pointer_type : llcontext -> lltype
+val pointer_type : lltype -> lltype
+[@@ocaml.deprecated
+  "pointer_type is deprecated in LLVM 15, use pointer_type2 that constructs \
+   an opaque pointer. In LLVM 16, pointer_type is an alias for pointer_type2."]
 
-(** [qualified_pointer_type context sp] returns the pointer type referencing
-    objects in address space [sp].
+(** [pointer_type2 c] returns the opaque pointer type in the default address
+    space (0) in context [c]. See the method [llvm::PointerType::getUnqual]. *)
+val pointer_type2 : llcontext -> lltype
+
+(** [qualified_pointer_type ty a] returns the pointer type referencing objects
+    of type [ty] in address space [a].
     See the method [llvm::PointerType::get]. *)
-val qualified_pointer_type : llcontext -> int -> lltype
+val qualified_pointer_type : lltype -> int -> lltype
+[@@ocaml.deprecated
+  "qualified_pointer_type is deprecated in LLVM 15, use \
+   qualified_pointer_type2 that constructs an opaque pointer. In LLVM 16, \
+   qualified_pointer_type is an alias for qualified_pointer_type2."]
+
+(** [qualified_pointer_type2 c a] returns the opaque pointer type in address
+    space [a] in context [c].
+    See the method [llvm::PointerType::get]. *)
+val qualified_pointer_type2 : llcontext -> int -> lltype
 
 (** [vector_type ty n] returns the array type containing [n] elements of the
     primitive type [ty]. See the method [llvm::ArrayType::get]. *)
@@ -1044,11 +1060,9 @@ val const_vector : llvalue array -> llvalue
     or [None] if this is not a string constant. *)
 val string_of_const : llvalue -> string option
 
-(** [aggregate_element c idx] returns [Some elt] where [elt] is the element of
-    constant aggregate [c] at the specified index [idx], or [None] if [idx] is
-    out of range or it's not possible to determine the element.
-    See the method [llvm::Constant::getAggregateElement]. *)
-val aggregate_element : llvalue -> int -> llvalue option
+(** [const_element c] returns a constant for a specified index's element.
+    See the method ConstantDataSequential::getElementAsConstant. *)
+val const_element : llvalue -> int -> llvalue
 
 
 (** {7 Constant expressions} *)
@@ -1078,6 +1092,10 @@ val const_nsw_neg : llvalue -> llvalue
     no unsigned wrapping. The result is undefined if the negation overflows.
     See the method [llvm::ConstantExpr::getNUWNeg]. *)
 val const_nuw_neg : llvalue -> llvalue
+
+(** [const_fneg c] returns the arithmetic negation of the constant float [c].
+    See the method [llvm::ConstantExpr::getFNeg]. *)
+val const_fneg : llvalue -> llvalue
 
 (** [const_not c] returns the bitwise inverse of the constant [c].
     See the method [llvm::ConstantExpr::getNot]. *)
@@ -1165,16 +1183,34 @@ val const_lshr : llvalue -> llvalue -> llvalue
     See the method [llvm::ConstantExpr::getAShr]. *)
 val const_ashr : llvalue -> llvalue -> llvalue
 
-(** [const_gep srcty pc indices] returns the constant [getElementPtr] of [pc]
+(** [const_gep pc indices] returns the constant [getElementPtr] of [pc] with the
+    constant integers indices from the array [indices].
+    See the method [llvm::ConstantExpr::getGetElementPtr]. *)
+val const_gep : llvalue -> llvalue array -> llvalue
+[@@ocaml.deprecated
+  "const_gep is deprecated in LLVM 15, use const_gep2 that takes an \
+   additional lltype argument instead. In LLVM 16, const_gep is an alias for \
+   const_gep2."]
+
+(** [const_gep2 srcty pc indices] returns the constant [getElementPtr] of [pc]
     with source element type [srcty] and the constant integers indices from the
     array [indices].
     See the method [llvm::ConstantExpr::getGetElementPtr]. *)
-val const_gep : lltype -> llvalue -> llvalue array -> llvalue
+val const_gep2 : lltype -> llvalue -> llvalue array -> llvalue
 
-(** [const_in_bounds_gep ty pc indices] returns the constant [getElementPtr] of
-    [pc] with the constant integers indices from the array [indices].
+(** [const_in_bounds_gep pc indices] returns the constant [getElementPtr] of [pc]
+    with the constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
-val const_in_bounds_gep : lltype -> llvalue -> llvalue array -> llvalue
+val const_in_bounds_gep : llvalue -> llvalue array -> llvalue
+ [@@ocaml.deprecated
+   "const_in_bounds_gep is deprecated in LLVM 15, use const_in_bounds_gep2 \
+    that takes an additional lltype argument instead. In LLVM 16, \
+    const_in_bounds_gep is an alias for const_in_bounds_gep2."]
+
+(** [const_in_bounds_gep2 ty pc indices] returns the constant [getElementPtr] of [pc]
+    with the constant integers indices from the array [indices].
+    See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
+val const_in_bounds_gep2 : lltype -> llvalue -> llvalue array -> llvalue
 
 (** [const_trunc c ty] returns the constant truncation of integer constant [c]
     to the smaller integer type [ty].
@@ -1501,10 +1537,19 @@ val set_externally_initialized : bool -> llvalue -> unit
 
 (** {7 Operations on aliases} *)
 
-(** [add_alias m vt sp a n] inserts an alias in the module [m] with the value
-    type [vt] the address space [sp] the aliasee [a] with the name [n].
+(** [add_alias m t a n] inserts an alias in the module [m] with the type [t] and
+    the aliasee [a] with the name [n].
     See the constructor for [llvm::GlobalAlias]. *)
-val add_alias : llmodule -> lltype -> int -> llvalue -> string -> llvalue
+val add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
+[@@ocaml.deprecated
+  "add_alias is deprecated in LLVM 15, use add_alias2 that takes an \
+   additional lltype argument instead. In LLVM 16, add_alias is an alias for \
+   add_alias2"]
+
+(** [add_alias m vt as a n] inserts an alias in the module [m] with the value
+    type [vt] the address space [as] the aliasee [a] with the name [n].
+    See the constructor for [llvm::GlobalAlias]. *)
+val add_alias2 : llmodule -> lltype -> int -> llvalue -> string -> llvalue
 
 (** {7 Operations on functions} *)
 
@@ -2084,12 +2129,23 @@ val build_indirect_br : llvalue -> int -> llbuilder -> llvalue
     See the method [llvm::IndirectBrInst::addDestination]. **)
 val add_destination : llvalue -> llbasicblock -> unit
 
-(** [build_invoke fnty fn args tobb unwindbb name b] creates an
+(** [build_invoke fn args tobb unwindbb name b] creates an
     [%name = invoke %fn(args) to %tobb unwind %unwindbb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInvoke]. *)
-val build_invoke : lltype -> llvalue -> llvalue array -> llbasicblock ->
-                   llbasicblock -> string -> llbuilder -> llvalue
+val build_invoke : llvalue -> llvalue array -> llbasicblock ->
+                        llbasicblock -> string -> llbuilder -> llvalue
+[@@ocaml.deprecated
+  "build_invoke is deprecated in LLVM 15, use build_invoke2 that takes an \
+   additional lltype argument instead. In LLVM 16, build_invoke is an alias \
+   for build_invoke2."]
+
+(** [build_invoke2 fnty fn args tobb unwindbb name b] creates an
+    [%name = invoke %fn(args) to %tobb unwind %unwindbb]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateInvoke]. *)
+val build_invoke2 : lltype -> llvalue -> llvalue array -> llbasicblock ->
+                        llbasicblock -> string -> llbuilder -> llvalue
 
 (** [build_landingpad ty persfn numclauses name b] creates an
     [landingpad]
@@ -2325,11 +2381,21 @@ val build_alloca : lltype -> string -> llbuilder -> llvalue
 val build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
                               llvalue
 
-(** [build_load ty v name b] creates a
+(** [build_load v name b] creates a
+    [%name = load %v]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateLoad]. *)
+val build_load : llvalue -> string -> llbuilder -> llvalue
+[@@ocaml.deprecated
+  "build_load is deprecated in LLVM 15, use build_load2 that takes an \
+   additional lltype argument instead. In LLVM 16, build_load is an alias for
+   build_load2."]
+
+(** [build_load2 ty v name b] creates a
     [%name = load %ty, %v]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateLoad]. *)
-val build_load : lltype -> llvalue -> string -> llbuilder -> llvalue
+val build_load2 : lltype -> llvalue -> string -> llbuilder -> llvalue
 
 (** [build_store v p b] creates a
     [store %v, %p]
@@ -2345,26 +2411,58 @@ val build_store : llvalue -> llvalue -> llbuilder -> llvalue
 val build_atomicrmw : AtomicRMWBinOp.t -> llvalue -> llvalue ->
                       AtomicOrdering.t -> bool -> string -> llbuilder -> llvalue
 
-(** [build_gep srcty p indices name b] creates a
+(** [build_gep p indices name b] creates a
+    [%name = getelementptr %p, indices...]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateGetElementPtr]. *)
+val build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
+[@@ocaml.deprecated
+  "build_gep is deprecated in LLVM 15, use build_gep2 that takes an \
+   additional lltype argument instead. In LLVM 16, build_gep is an alias for \
+   build_gep2."]
+
+(** [build_gep2 srcty p indices name b] creates a
     [%name = getelementptr srcty, %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGetElementPtr]. *)
-val build_gep : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
-                      llvalue
+val build_gep2 : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
+                       llvalue
 
-(** [build_in_bounds_gep srcty p indices name b] creates a
+(** [build_in_bounds_gep p indices name b] creates a
+    [%name = gelementptr inbounds %p, indices...]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateInBoundsGetElementPtr]. *)
+val build_in_bounds_gep : llvalue -> llvalue array -> string -> llbuilder ->
+                               llvalue
+[@@ocaml.deprecated
+  "build_in_bounds_gep is deprecated in LLVM 15, use build_in_bounds_gep2 \
+   that takes an additional lltype argument instead. In LLVM 16, \
+   build_in_bounds_gep is an alias for build_in_bounds_gep2."]
+
+(** [build_in_bounds_gep2 srcty p indices name b] creates a
     [%name = gelementptr inbounds srcty, %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInBoundsGetElementPtr]. *)
-val build_in_bounds_gep : lltype -> llvalue -> llvalue array -> string ->
-                               llbuilder -> llvalue
+val build_in_bounds_gep2 : lltype -> llvalue -> llvalue array -> string ->
+                                llbuilder -> llvalue
 
-(** [build_struct_gep srcty p idx name b] creates a
+(** [build_struct_gep p idx name b] creates a
+    [%name = getelementptr %p, 0, idx]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateStructGetElementPtr]. *)
+val build_struct_gep : llvalue -> int -> string -> llbuilder ->
+                            llvalue
+[@@ocaml.deprecated
+  "build_struct_gep is deprecated in LLVM 15, use build_struct_gep2 that \
+   takes an additional lltype argument instead. In LLVM 16, build_struct_gep \
+   is an alias for build_struct_gep2."]
+
+(** [build_struct_gep2 srcty p idx name b] creates a
     [%name = getelementptr srcty, %p, 0, idx]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateStructGetElementPtr]. *)
-val build_struct_gep : lltype -> llvalue -> int -> string -> llbuilder ->
-                           llvalue
+val build_struct_gep2 : lltype -> llvalue -> int -> string -> llbuilder ->
+                            llvalue
 
 (** [build_global_string str name b] creates a series of instructions that adds
     a global string at the position specified by the instruction builder [b].
@@ -2519,12 +2617,22 @@ val build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
     See the method [llvm::LLVMBuilder::CreatePHI]. *)
 val build_empty_phi : lltype -> string -> llbuilder -> llvalue
 
-(** [build_call fnty fn args name b] creates a
+(** [build_call fn args name b] creates a
     [%name = call %fn(args...)]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateCall]. *)
-val build_call : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
-                       llvalue
+val build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
+[@@ocaml.deprecated
+  "build_call is deprecated in LLVM 15, use build_call2 that takes an \
+   additional lltype argument instead. In LLVM 16, build_call is an alias for \
+   build_call2."]
+
+(** [build_call2 fnty fn args name b] creates a
+    [%name = call %fn(args...)]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateCall]. *)
+val build_call2 : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
+                        llvalue
 
 (** [build_select cond thenv elsev name b] creates a
     [%name = select %cond, %thenv, %elsev]
@@ -2586,12 +2694,22 @@ val build_is_null : llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateIsNotNull]. *)
 val build_is_not_null : llvalue -> string -> llbuilder -> llvalue
 
-(** [build_ptrdiff elemty lhs rhs name b] creates a series of instructions
+(** [build_ptrdiff lhs rhs name b] creates a series of instructions that measure
+    the difference between two pointer values at the position specified by the
+    instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreatePtrDiff]. *)
+val build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
+[@@ocaml.deprecated
+  "build_ptrdiff is deprecated in LLVM 15, use build_ptrdiff2 that takes an \
+   additional lltype argument instead. In LLVM 16, build_ptrdiff is an alias \
+   for build_ptrdiff2."]
+
+(** [build_ptrdiff2 elemty lhs rhs name b] creates a series of instructions
     that measure the difference between two pointer values in multiples of
     [elemty] at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreatePtrDiff]. *)
-val build_ptrdiff : lltype -> llvalue -> llvalue -> string -> llbuilder ->
-                    llvalue
+val build_ptrdiff2 : lltype -> llvalue -> llvalue -> string -> llbuilder ->
+                     llvalue
 
 (** [build_freeze x name b] creates a
     [%name = freeze %x]
