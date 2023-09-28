@@ -1172,10 +1172,10 @@ value llvm_const_nuw_neg(value Value) {
 }
 
 /* llvalue -> llvalue */
-value llvm_const_fneg(value Value) {
-  LLVMValueRef NegValue = LLVMConstFNeg(Value_val(Value));
-  return to_val(NegValue);
-}
+// value llvm_const_fneg(value Value) {
+//   LLVMValueRef NegValue = LLVMConstFNeg(Value_val(Value));
+//   return to_val(NegValue);
+// }
 
 /* llvalue -> llvalue */
 value llvm_const_not(value Value) {
@@ -1286,13 +1286,13 @@ value llvm_const_ashr(value LHS, value RHS) {
 }
 
 /* llvalue -> llvalue array -> llvalue */
-value llvm_const_gep(value ConstantVal, value Indices) {
-  LLVMValueRef *Temp = from_val_array(Indices);
-  LLVMValueRef Value =
-      LLVMConstGEP(Value_val(ConstantVal), Temp, Wosize_val(Indices));
-  free(Temp);
-  return to_val(Value);
-}
+// value llvm_const_gep(value ConstantVal, value Indices) {
+//   LLVMValueRef *Temp = from_val_array(Indices);
+//   LLVMValueRef Value =
+//       LLVMConstGEP(Value_val(ConstantVal), Temp, Wosize_val(Indices));
+//   free(Temp);
+//   return to_val(Value);
+// }
 
 /* lltype -> llvalue -> llvalue array -> llvalue */
 value llvm_const_gep2(value Ty, value ConstantVal, value Indices) {
@@ -1305,14 +1305,14 @@ value llvm_const_gep2(value Ty, value ConstantVal, value Indices) {
 }
 
 /* llvalue -> llvalue array -> llvalue */
-value llvm_const_in_bounds_gep(value ConstantVal, value Indices) {
-  mlsize_t Length = Wosize_val(Indices);
-  LLVMValueRef *Temp = from_val_array(Indices);
-  LLVMValueRef Value =
-      LLVMConstInBoundsGEP(Value_val(ConstantVal), Temp, Length);
-  free(Temp);
-  return to_val(Value);
-}
+// value llvm_const_in_bounds_gep(value ConstantVal, value Indices) {
+//   mlsize_t Length = Wosize_val(Indices);
+//   LLVMValueRef *Temp = from_val_array(Indices);
+//   LLVMValueRef Value =
+//       LLVMConstInBoundsGEP(Value_val(ConstantVal), Temp, Length);
+//   free(Temp);
+//   return to_val(Value);
+// }
 
 /* lltype -> llvalue -> llvalue array -> llvalue */
 value llvm_const_in_bounds_gep2(value Ty, value ConstantVal, value Indices) {
@@ -1715,10 +1715,10 @@ value llvm_set_global_constant(value Flag, value GlobalVar) {
 
 /*--... Operations on aliases ..............................................--*/
 
-value llvm_add_alias(value M, value Ty, value Aliasee, value Name) {
-  return to_val(LLVMAddAlias(Module_val(M), Type_val(Ty), Value_val(Aliasee),
-                             String_val(Name)));
-}
+// value llvm_add_alias(value M, value Ty, value Aliasee, value Name) {
+//   return to_val(LLVMAddAlias(Module_val(M), Type_val(Ty), Value_val(Aliasee),
+//                              String_val(Name)));
+// }
 
 /* llmodule -> lltype -> int -> llvalue -> string -> llvalue */
 value llvm_add_alias2(value M, value ValueTy, value AddrSpace, value Aliasee,
@@ -2294,21 +2294,21 @@ value llvm_add_destination(value IndirectBr, value Dest) {
 
 /* llvalue -> llvalue array -> llbasicblock -> llbasicblock ->
    string -> llbuilder -> llvalue */
-value llvm_build_invoke_nat(value Fn, value Args, value Then, value Catch,
-                            value Name, value B) {
-  mlsize_t Length = Wosize_val(Args);
-  LLVMValueRef *Temp = from_val_array(Args);
-  LLVMValueRef Value = LLVMBuildInvoke(Builder_val(B), Value_val(Fn), Temp,
-                                       Length, BasicBlock_val(Then),
-                                       BasicBlock_val(Catch), String_val(Name));
-  free(Temp);
-  return to_val(Value);
-}
+// value llvm_build_invoke_nat(value Fn, value Args, value Then, value Catch,
+//                             value Name, value B) {
+//   mlsize_t Length = Wosize_val(Args);
+//   LLVMValueRef *Temp = from_val_array(Args);
+//   LLVMValueRef Value = LLVMBuildInvoke(Builder_val(B), Value_val(Fn), Temp,
+//                                        Length, BasicBlock_val(Then),
+//                                        BasicBlock_val(Catch), String_val(Name));
+//   free(Temp);
+//   return to_val(Value);
+// }
 
-value llvm_build_invoke_bc(value Args[], int NumArgs) {
-  return llvm_build_invoke_nat(Args[0], Args[1], Args[2], Args[3], Args[4],
-                               Args[5]);
-}
+// value llvm_build_invoke_bc(value Args[], int NumArgs) {
+//   return llvm_build_invoke_nat(Args[0], Args[1], Args[2], Args[3], Args[4],
+//                                Args[5]);
+// }
 
 /* lltype -> llvalue -> llvalue array -> llbasicblock -> llbasicblock ->
    string -> llbuilder -> llvalue */
@@ -2559,10 +2559,10 @@ value llvm_build_array_alloca(value Ty, value Size, value Name, value B) {
 }
 
 /* llvalue -> string -> llbuilder -> llvalue */
-value llvm_build_load(value Pointer, value Name, value B) {
-  return to_val(
-      LLVMBuildLoad(Builder_val(B), Value_val(Pointer), String_val(Name)));
-}
+// value llvm_build_load(value Pointer, value Name, value B) {
+//   return to_val(
+//       LLVMBuildLoad(Builder_val(B), Value_val(Pointer), String_val(Name)));
+// }
 
 /* lltype -> llvalue -> string -> llbuilder -> llvalue */
 value llvm_build_load2(value Ty, value Pointer, value Name, value B) {
@@ -2593,14 +2593,14 @@ value llvm_build_atomicrmw_bytecode(value *argv, int argn) {
 }
 
 /* llvalue -> llvalue array -> string -> llbuilder -> llvalue */
-value llvm_build_gep(value Pointer, value Indices, value Name, value B) {
-  mlsize_t Length = Wosize_val(Indices);
-  LLVMValueRef *Temp = from_val_array(Indices);
-  LLVMValueRef Value = LLVMBuildGEP(Builder_val(B), Value_val(Pointer), Temp,
-                                    Length, String_val(Name));
-  free(Temp);
-  return to_val(Value);
-}
+// value llvm_build_gep(value Pointer, value Indices, value Name, value B) {
+//   mlsize_t Length = Wosize_val(Indices);
+//   LLVMValueRef *Temp = from_val_array(Indices);
+//   LLVMValueRef Value = LLVMBuildGEP(Builder_val(B), Value_val(Pointer), Temp,
+//                                     Length, String_val(Name));
+//   free(Temp);
+//   return to_val(Value);
+// }
 
 /* lltype -> llvalue -> llvalue array -> string -> llbuilder -> llvalue */
 value llvm_build_gep2(value Ty, value Pointer, value Indices, value Name,
@@ -2615,15 +2615,15 @@ value llvm_build_gep2(value Ty, value Pointer, value Indices, value Name,
 }
 
 /* llvalue -> llvalue array -> string -> llbuilder -> llvalue */
-value llvm_build_in_bounds_gep(value Pointer, value Indices, value Name,
-                               value B) {
-  LLVMValueRef *Temp = from_val_array(Indices);
-  LLVMValueRef Value =
-      LLVMBuildInBoundsGEP(Builder_val(B), Value_val(Pointer), Temp,
-                           Wosize_val(Indices), String_val(Name));
-  free(Temp);
-  return to_val(Value);
-}
+// value llvm_build_in_bounds_gep(value Pointer, value Indices, value Name,
+//                                value B) {
+//   LLVMValueRef *Temp = from_val_array(Indices);
+//   LLVMValueRef Value =
+//       LLVMBuildInBoundsGEP(Builder_val(B), Value_val(Pointer), Temp,
+//                            Wosize_val(Indices), String_val(Name));
+//   free(Temp);
+//   return to_val(Value);
+// }
 
 /* lltype -> llvalue -> llvalue array -> string -> llbuilder -> llvalue */
 value llvm_build_in_bounds_gep2(value Ty, value Pointer, value Indices,
@@ -2638,10 +2638,10 @@ value llvm_build_in_bounds_gep2(value Ty, value Pointer, value Indices,
 }
 
 /* llvalue -> int -> string -> llbuilder -> llvalue */
-value llvm_build_struct_gep(value Pointer, value Index, value Name, value B) {
-  return to_val(LLVMBuildStructGEP(Builder_val(B), Value_val(Pointer),
-                                   Int_val(Index), String_val(Name)));
-}
+// value llvm_build_struct_gep(value Pointer, value Index, value Name, value B) {
+//   return to_val(LLVMBuildStructGEP(Builder_val(B), Value_val(Pointer),
+//                                    Int_val(Index), String_val(Name)));
+// }
 
 /* lltype -> llvalue -> int -> string -> llbuilder -> llvalue */
 value llvm_build_struct_gep2(value Ty, value Pointer, value Index, value Name,
@@ -2818,13 +2818,13 @@ value llvm_build_empty_phi(value Type, value Name, value B) {
 }
 
 /* llvalue -> llvalue array -> string -> llbuilder -> llvalue */
-value llvm_build_call(value Fn, value Params, value Name, value B) {
-  LLVMValueRef *Temp = from_val_array(Params);
-  LLVMValueRef Value = LLVMBuildCall(Builder_val(B), Value_val(Fn), Temp,
-                                     Wosize_val(Params), String_val(Name));
-  free(Temp);
-  return to_val(Value);
-}
+// value llvm_build_call(value Fn, value Params, value Name, value B) {
+//   LLVMValueRef *Temp = from_val_array(Params);
+//   LLVMValueRef Value = LLVMBuildCall(Builder_val(B), Value_val(Fn), Temp,
+//                                      Wosize_val(Params), String_val(Name));
+//   free(Temp);
+//   return to_val(Value);
+// }
 
 /* lltype -> llvalue -> llvalue array -> string -> llbuilder -> llvalue */
 value llvm_build_call2(value FnTy, value Fn, value Params, value Name,
@@ -2899,10 +2899,10 @@ value llvm_build_is_not_null(value Val, value Name, value B) {
 }
 
 /* llvalue -> llvalue -> string -> llbuilder -> llvalue */
-value llvm_build_ptrdiff(value LHS, value RHS, value Name, value B) {
-  return to_val(LLVMBuildPtrDiff(Builder_val(B), Value_val(LHS), Value_val(RHS),
-                                 String_val(Name)));
-}
+// value llvm_build_ptrdiff(value LHS, value RHS, value Name, value B) {
+//   return to_val(LLVMBuildPtrDiff(Builder_val(B), Value_val(LHS), Value_val(RHS),
+//                                  String_val(Name)));
+// }
 
 /* lltype -> llvalue -> llvalue -> string -> llbuilder -> llvalue */
 value llvm_build_ptrdiff2(value ElemTy, value LHS, value RHS, value Name,

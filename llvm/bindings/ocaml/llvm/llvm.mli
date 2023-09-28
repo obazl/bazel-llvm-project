@@ -1093,9 +1093,9 @@ val const_nsw_neg : llvalue -> llvalue
     See the method [llvm::ConstantExpr::getNUWNeg]. *)
 val const_nuw_neg : llvalue -> llvalue
 
-(** [const_fneg c] returns the arithmetic negation of the constant float [c].
-    See the method [llvm::ConstantExpr::getFNeg]. *)
-val const_fneg : llvalue -> llvalue
+(* (\** [const_fneg c] returns the arithmetic negation of the constant float [c]. *)
+(*     See the method [llvm::ConstantExpr::getFNeg]. *\) *)
+(* val const_fneg : llvalue -> llvalue *)
 
 (** [const_not c] returns the bitwise inverse of the constant [c].
     See the method [llvm::ConstantExpr::getNot]. *)
@@ -1186,7 +1186,8 @@ val const_ashr : llvalue -> llvalue -> llvalue
 (** [const_gep pc indices] returns the constant [getElementPtr] of [pc] with the
     constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getGetElementPtr]. *)
-val const_gep : llvalue -> llvalue array -> llvalue
+val const_gep : lltype -> llvalue -> llvalue array -> llvalue
+(* val const_gep : llvalue -> llvalue array -> llvalue *)
 [@@ocaml.deprecated
   "const_gep is deprecated in LLVM 15, use const_gep2 that takes an \
    additional lltype argument instead. In LLVM 16, const_gep is an alias for \
@@ -1201,7 +1202,8 @@ val const_gep2 : lltype -> llvalue -> llvalue array -> llvalue
 (** [const_in_bounds_gep pc indices] returns the constant [getElementPtr] of [pc]
     with the constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
-val const_in_bounds_gep : llvalue -> llvalue array -> llvalue
+val const_in_bounds_gep : lltype -> llvalue -> llvalue array -> llvalue
+(* val const_in_bounds_gep : llvalue -> llvalue array -> llvalue *)
  [@@ocaml.deprecated
    "const_in_bounds_gep is deprecated in LLVM 15, use const_in_bounds_gep2 \
     that takes an additional lltype argument instead. In LLVM 16, \
@@ -1540,7 +1542,8 @@ val set_externally_initialized : bool -> llvalue -> unit
 (** [add_alias m t a n] inserts an alias in the module [m] with the type [t] and
     the aliasee [a] with the name [n].
     See the constructor for [llvm::GlobalAlias]. *)
-val add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
+val add_alias : llmodule -> lltype -> int -> llvalue -> string -> llvalue
+ (* : llmodule -> lltype -> llvalue -> string -> llvalue *)
 [@@ocaml.deprecated
   "add_alias is deprecated in LLVM 15, use add_alias2 that takes an \
    additional lltype argument instead. In LLVM 16, add_alias is an alias for \
@@ -2133,8 +2136,10 @@ val add_destination : llvalue -> llbasicblock -> unit
     [%name = invoke %fn(args) to %tobb unwind %unwindbb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInvoke]. *)
-val build_invoke : llvalue -> llvalue array -> llbasicblock ->
+val build_invoke : lltype -> llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
+(* val build_invoke : llvalue -> llvalue array -> llbasicblock -> *)
+(*                         llbasicblock -> string -> llbuilder -> llvalue *)
 [@@ocaml.deprecated
   "build_invoke is deprecated in LLVM 15, use build_invoke2 that takes an \
    additional lltype argument instead. In LLVM 16, build_invoke is an alias \
@@ -2385,7 +2390,7 @@ val build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
     [%name = load %v]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateLoad]. *)
-val build_load : llvalue -> string -> llbuilder -> llvalue
+val build_load : lltype -> llvalue -> string -> llbuilder -> llvalue (* : llvalue -> string -> llbuilder -> llvalue *)
 [@@ocaml.deprecated
   "build_load is deprecated in LLVM 15, use build_load2 that takes an \
    additional lltype argument instead. In LLVM 16, build_load is an alias for
@@ -2415,7 +2420,9 @@ val build_atomicrmw : AtomicRMWBinOp.t -> llvalue -> llvalue ->
     [%name = getelementptr %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGetElementPtr]. *)
-val build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
+val build_gep : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
+                       llvalue
+(* val build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue *)
 [@@ocaml.deprecated
   "build_gep is deprecated in LLVM 15, use build_gep2 that takes an \
    additional lltype argument instead. In LLVM 16, build_gep is an alias for \
@@ -2432,8 +2439,10 @@ val build_gep2 : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
     [%name = gelementptr inbounds %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInBoundsGetElementPtr]. *)
-val build_in_bounds_gep : llvalue -> llvalue array -> string -> llbuilder ->
-                               llvalue
+val build_in_bounds_gep : lltype -> llvalue -> llvalue array -> string ->
+                                llbuilder -> llvalue
+(* val build_in_bounds_gep : llvalue -> llvalue array -> string -> llbuilder -> *)
+(*                                llvalue *)
 [@@ocaml.deprecated
   "build_in_bounds_gep is deprecated in LLVM 15, use build_in_bounds_gep2 \
    that takes an additional lltype argument instead. In LLVM 16, \
@@ -2450,8 +2459,10 @@ val build_in_bounds_gep2 : lltype -> llvalue -> llvalue array -> string ->
     [%name = getelementptr %p, 0, idx]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateStructGetElementPtr]. *)
-val build_struct_gep : llvalue -> int -> string -> llbuilder ->
+val build_struct_gep : lltype -> llvalue -> int -> string -> llbuilder ->
                             llvalue
+(* val build_struct_gep : llvalue -> int -> string -> llbuilder -> *)
+(*                             llvalue *)
 [@@ocaml.deprecated
   "build_struct_gep is deprecated in LLVM 15, use build_struct_gep2 that \
    takes an additional lltype argument instead. In LLVM 16, build_struct_gep \
@@ -2621,7 +2632,9 @@ val build_empty_phi : lltype -> string -> llbuilder -> llvalue
     [%name = call %fn(args...)]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateCall]. *)
-val build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
+val build_call : lltype -> llvalue -> llvalue array -> string -> llbuilder ->
+                        llvalue
+(* val build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue *)
 [@@ocaml.deprecated
   "build_call is deprecated in LLVM 15, use build_call2 that takes an \
    additional lltype argument instead. In LLVM 16, build_call is an alias for \

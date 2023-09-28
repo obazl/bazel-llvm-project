@@ -1,4 +1,4 @@
-LLVM_VERSION = "15.0.7"
+LLVM_VERSION = "16.0.6"
 LLVM_BUILD_DIR = ".build." + LLVM_VERSION
 
 module(
@@ -25,7 +25,6 @@ llvm_sdk.c(
 llvm_sdk.ocaml(
     version = LLVM_VERSION,
     llvm_build_dir = LLVM_BUILD_DIR,
-    ocaml_srcs = """/Users/gar/tmp/llvm-dune-full-minified-15.0.7+nnp-2/llvm-project/llvm/bindings/ocaml""",
     targets = ["ALL"]
 )
 use_repo(llvm_sdk,
